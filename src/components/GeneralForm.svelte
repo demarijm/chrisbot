@@ -90,6 +90,8 @@
 			<div>Data subtmitted to chatbot</div>
 			{firstName}
 			{lastName}
+
+			<div class="mt-2 border border-dashed border-red-300 p-4">Link does not work right now</div>
 			<a href={chatUrl} target="_blank" class="text-blue-600 underline hover:text-blue-800">
 				{chatUrl}
 			</a>
