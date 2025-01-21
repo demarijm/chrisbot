@@ -78,19 +78,6 @@
 		/>
 	</div>
 
-	<div>
-		<label for="occupation" class="mb-2 block font-semibold text-gray-700"> Occupation </label>
-		<select
-			id="occupation"
-			bind:value={occupation}
-			class="block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-400 focus:outline-none focus:ring focus:ring-blue-200"
-		>
-			{#each occupations as job}
-				<option value={job}>{job}</option>
-			{/each}
-		</select>
-	</div>
-
 	<button
 		type="submit"
 		class="rounded-md bg-blue-600 px-6 py-2 font-semibold text-white shadow hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-200"
@@ -100,6 +87,9 @@
 	{#if chatUrl}
 		<div class="mt-4 text-center">
 			<p class="mb-2 text-gray-700">Your new chat is ready:</p>
+			<div>Data subtmitted to chatbot</div>
+			{firstName}
+			{lastName}
 			<a href={chatUrl} target="_blank" class="text-blue-600 underline hover:text-blue-800">
 				{chatUrl}
 			</a>
