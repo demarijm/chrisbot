@@ -1,61 +1,93 @@
 <script lang="ts">
 	import { Client } from '@botpress/client';
+
+	// Form inputs
 	let firstName = '';
 	let lastName = '';
-	let occupation = 'Developer';
+	let employerDistrict = '';
+	let school = '';
+	let jobTitle = '';
+	let workEmail = '';
+	let personalEmail = '';
+	let mobileNumber = '';
+
+	// This holds the data actually submitted to the bot
+	let submittedData: {
+		firstName?: string;
+		lastName?: string;
+		employerDistrict?: string;
+		school?: string;
+		jobTitle?: string;
+		workEmail?: string;
+		personalEmail?: string;
+		mobileNumber?: string;
+	} = {};
+
 	let chatUrl = '';
 
 	async function handleSubmit(event: Event) {
 		event.preventDefault();
 
 		try {
-			// 1) Replace with your Botpress endpoint for creating a new conversation/chat
-			const endpoint = 'https://api.botpress.cloud/v1/chat/conversations';
-			// 2) Gather form data into a payload structure that your Botpress API expects
+			// 1) Prepare payload for Botpress
 			const payload = {
 				user: {
 					firstName,
 					lastName,
-					occupation
+					employerDistrict,
+					school,
+					jobTitle,
+					workEmail,
+					personalEmail,
+					mobileNumber
 				}
 			};
 
-			// 3) Send request to Botpress
+			// 2) Your Botpress configuration
 			const token = 'bp_pat_I3RztWQiZV3FvwVkaNTuXCkGxNtzNGfDHsIW';
 			const workspaceId = 'b09dce2a-736d-482a-8cbc-39b315b2058b';
 			const botId = '34ffb0c3-deb4-4b2f-9906-e80e1b5fc39c';
 			const client = new Client({ token, workspaceId, botId });
 
-			// 1. plain operations
+			// 3) Example call
 			const { bot } = await client.getBot({ id: botId });
 			console.log('### bot', bot);
 
-			// 2. list utils with `.collect()` function
+			// 4) Retrieve or create conversation
 			const [latestConversation] = await client.list
 				.conversations({ sortField: 'createdAt', sortDirection: 'desc', integrationName: 'chat' })
 				.collect({ limit: 1 });
 			console.log('### latestConversation', latestConversation);
 
+			// 5) Save chat URL
 			chatUrl = `https://chat.botpress.cloud/s/${workspaceId}/${botId}?conversationId=${bot.id}`;
-			console.log('Created new chat:', workspaceId);
 
-			// 5) Optionally reset form fields
+			// 6) Save the submitted form data so we can display it
+			submittedData = { ...payload.user };
+
+			// 7) Optionally reset the **input** fields if desired
+			//    If you want to keep the form as-is, remove these lines.
 			firstName = '';
 			lastName = '';
-			occupation = 'Developer';
+			employerDistrict = '';
+			school = '';
+			jobTitle = '';
+			workEmail = '';
+			personalEmail = '';
+			mobileNumber = '';
 		} catch (error) {
 			console.error('Failed to create new chat via Botpress API:', error);
 		}
 	}
-	const occupations = ['Developer', 'Designer', 'Manager'];
 </script>
 
 <form
 	on:submit|preventDefault={handleSubmit}
 	class="mx-auto w-full max-w-md space-y-6 rounded-md bg-white p-6 shadow-md"
 >
+	<!-- FIRST NAME -->
 	<div>
-		<label for="firstName" class="mb-2 block font-semibold text-gray-700"> First Name </label>
+		<label for="firstName" class="mb-2 block font-semibold text-gray-700">First Name</label>
 		<input
 			id="firstName"
 			bind:value={firstName}
@@ -66,8 +98,9 @@
 		/>
 	</div>
 
+	<!-- LAST NAME -->
 	<div>
-		<label for="lastName" class="mb-2 block font-semibold text-gray-700"> Last Name </label>
+		<label for="lastName" class="mb-2 block font-semibold text-gray-700">Last Name</label>
 		<input
 			id="lastName"
 			bind:value={lastName}
@@ -78,20 +111,109 @@
 		/>
 	</div>
 
+	<!-- EMPLOYER/DISTRICT -->
+	<div>
+		<label for="employerDistrict" class="mb-2 block font-semibold text-gray-700"
+			>Employer/District</label
+		>
+		<input
+			id="employerDistrict"
+			bind:value={employerDistrict}
+			type="text"
+			placeholder="Enter your employer/district"
+			required
+			class="block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-400 focus:outline-none focus:ring focus:ring-blue-200"
+		/>
+	</div>
+
+	<!-- SCHOOL -->
+	<div>
+		<label for="school" class="mb-2 block font-semibold text-gray-700">School</label>
+		<input
+			id="school"
+			bind:value={school}
+			type="text"
+			placeholder="Enter your school"
+			class="block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-400 focus:outline-none focus:ring focus:ring-blue-200"
+		/>
+	</div>
+
+	<!-- JOB TITLE -->
+	<div>
+		<label for="jobTitle" class="mb-2 block font-semibold text-gray-700">Job Title</label>
+		<input
+			id="jobTitle"
+			bind:value={jobTitle}
+			type="text"
+			placeholder="Enter your job title"
+			required
+			class="block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-400 focus:outline-none focus:ring focus:ring-blue-200"
+		/>
+	</div>
+
+	<!-- WORK EMAIL -->
+	<div>
+		<label for="workEmail" class="mb-2 block font-semibold text-gray-700">Work Email</label>
+		<input
+			id="workEmail"
+			bind:value={workEmail}
+			type="email"
+			placeholder="Work email address"
+			class="block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-400 focus:outline-none focus:ring focus:ring-blue-200"
+		/>
+	</div>
+
+	<!-- PERSONAL EMAIL -->
+	<div>
+		<label for="personalEmail" class="mb-2 block font-semibold text-gray-700">Personal Email</label>
+		<input
+			id="personalEmail"
+			bind:value={personalEmail}
+			type="email"
+			placeholder="Personal email address"
+			class="block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-400 focus:outline-none focus:ring focus:ring-blue-200"
+		/>
+	</div>
+
+	<!-- MOBILE NUMBER -->
+	<div>
+		<label for="mobileNumber" class="mb-2 block font-semibold text-gray-700">Mobile Number</label>
+		<input
+			id="mobileNumber"
+			bind:value={mobileNumber}
+			type="tel"
+			placeholder="Enter your mobile number"
+			class="block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-400 focus:outline-none focus:ring focus:ring-blue-200"
+		/>
+	</div>
+
 	<button
 		type="submit"
 		class="rounded-md bg-blue-600 px-6 py-2 font-semibold text-white shadow hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-200"
 	>
 		Create New Chat
 	</button>
+
+	<!-- SHOW DATA AFTER SUBMISSION -->
 	{#if chatUrl}
 		<div class="mt-4 text-center">
 			<p class="mb-2 text-gray-700">Your new chat is ready:</p>
-			<div>Data subtmitted to chatbot</div>
-			{firstName}
-			{lastName}
+			<div>Data you submitted:</div>
+			<ul class="ml-4 text-left">
+				<li>First Name: {submittedData.firstName}</li>
+				<li>Last Name: {submittedData.lastName}</li>
+				<li>Employer/District: {submittedData.employerDistrict}</li>
+				<li>School: {submittedData.school}</li>
+				<li>Job Title: {submittedData.jobTitle}</li>
+				<li>Work Email: {submittedData.workEmail}</li>
+				<li>Personal Email: {submittedData.personalEmail}</li>
+				<li>Mobile Number: {submittedData.mobileNumber}</li>
+			</ul>
 
-			<div class="mt-2 border border-dashed border-red-300 p-4">Link does not work right now</div>
+			<div class="mt-2 border border-dashed border-red-300 p-4">
+				Note: This link may not work until everything is fully configured:
+			</div>
+
 			<a href={chatUrl} target="_blank" class="text-blue-600 underline hover:text-blue-800">
 				{chatUrl}
 			</a>
