@@ -1,11 +1,12 @@
 <script lang="ts">
 	import GeneralForm from '../components/GeneralForm.svelte';
+	import PensionForm from '../components/PensionForm.svelte';
 	import TestingRiskCalculation from '../components/TestingRiskCalculation.svelte';
 
 	// Track which tab is currently active
-	let activeTab: 'general' | 'risk' = 'general';
+	let activeTab: 'general' | 'risk' | 'pension' = 'general';
 
-	function switchTab(tab: 'general' | 'risk') {
+	function switchTab(tab: 'general' | 'risk' | 'pension') {
 		activeTab = tab;
 	}
 </script>
@@ -29,14 +30,24 @@
 		>
 			Risk Calculation
 		</button>
+		<button
+			on:click={() => switchTab('pension')}
+			class="rounded-t-md px-4 py-2 font-semibold"
+			class:bg-white={activeTab === 'risk'}
+			class:bg-gray-200={activeTab !== 'risk'}
+		>
+			Pension Calculation
+		</button>
 	</div>
 
 	<!-- Tab Content -->
 	<div class="mx-auto w-full max-w-3xl rounded-b-md bg-white p-6 shadow-md">
 		{#if activeTab === 'general'}
 			<GeneralForm />
-		{:else}
+		{:else if activeTab === 'risk'}
 			<TestingRiskCalculation />
+		{:else if activeTab === 'pension'}
+			<PensionForm />
 		{/if}
 	</div>
 </section>
