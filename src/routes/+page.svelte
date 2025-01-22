@@ -4,9 +4,9 @@
 	import TestingRiskCalculation from '../components/TestingRiskCalculation.svelte';
 
 	// Track which tab is currently active
-	let activeTab: 'general' | 'risk' | 'pension' = 'general';
+	let activeTab: 'general' | 'risk' | 'vendor' | 'jeanie' | 'pension' = 'general';
 
-	function switchTab(tab: 'general' | 'risk' | 'pension') {
+	function switchTab(tab: 'general' | 'risk' | 'pension' | 'vendor' | 'jeanie') {
 		activeTab = tab;
 	}
 </script>
@@ -20,7 +20,7 @@
 			class:bg-white={activeTab === 'general'}
 			class:bg-gray-200={activeTab !== 'general'}
 		>
-			General Form
+			Bot link generation
 		</button>
 		<button
 			on:click={() => switchTab('risk')}
@@ -38,6 +38,22 @@
 		>
 			Pension Calculation
 		</button>
+		<button
+			on:click={() => switchTab('vendor')}
+			class="rounded-t-md px-4 py-2 font-semibold"
+			class:bg-white={activeTab === 'risk'}
+			class:bg-gray-200={activeTab !== 'risk'}
+		>
+			Vendor Recommendations
+		</button>
+		<button
+			on:click={() => switchTab('jeanie')}
+			class="rounded-t-md px-4 py-2 font-semibold"
+			class:bg-white={activeTab === 'risk'}
+			class:bg-gray-200={activeTab !== 'risk'}
+		>
+			Data back to Jeanie
+		</button>
 	</div>
 
 	<!-- Tab Content -->
@@ -48,6 +64,10 @@
 			<TestingRiskCalculation />
 		{:else if activeTab === 'pension'}
 			<PensionForm />
+		{:else if activeTab === 'vendor'}
+			Coming soon
+		{:else if activeTab === 'jeanie'}
+			Data Object handed back to Jeanie
 		{/if}
 	</div>
 </section>
