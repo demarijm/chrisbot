@@ -98,8 +98,12 @@
 
 	<!-- State Selection -->
 	<div class="mb-4">
-		<label class="mb-1 block font-semibold">State:</label>
-		<select bind:value={selectedState} class="w-full rounded border border-gray-300 px-2 py-1">
+		<label for="state" class="mb-1 block font-semibold">State:</label>
+		<select
+			id="state"
+			bind:value={selectedState}
+			class="w-full rounded border border-gray-300 px-2 py-1"
+		>
 			{#each states as st}
 				<option value={st}>{st}</option>
 			{/each}
@@ -108,8 +112,9 @@
 
 	<!-- Years of Service -->
 	<div class="mb-4">
-		<label class="mb-1 block font-semibold">Years of Service:</label>
+		<label for="yearsOfService" class="mb-1 block font-semibold">Years of Service:</label>
 		<input
+			id="yearsOfService"
 			type="number"
 			min="0"
 			max="100"
@@ -120,9 +125,10 @@
 	</div>
 
 	<!-- Average Salary -->
-	<div class="mb-4">
-		<label class="mb-1 block font-semibold">Average Salary:</label>
+	<div>
+		<label for="averageSalary" class="mb-1 block font-semibold">Average Salary:</label>
 		<input
+			id="averageSalary"
 			type="number"
 			bind:value={averageSalary}
 			class="w-full rounded border border-gray-300 px-2 py-1"
