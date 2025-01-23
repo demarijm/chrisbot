@@ -33,24 +33,24 @@
 		<button
 			on:click={() => switchTab('pension')}
 			class="rounded-t-md px-4 py-2 font-semibold"
-			class:bg-white={activeTab === 'risk'}
-			class:bg-gray-200={activeTab !== 'risk'}
+			class:bg-white={activeTab === 'pension'}
+			class:bg-gray-200={activeTab !== 'pension'}
 		>
 			Pension Calculation
 		</button>
 		<button
 			on:click={() => switchTab('vendor')}
 			class="rounded-t-md px-4 py-2 font-semibold"
-			class:bg-white={activeTab === 'risk'}
-			class:bg-gray-200={activeTab !== 'risk'}
+			class:bg-white={activeTab === 'vendor'}
+			class:bg-gray-200={activeTab !== 'vendor'}
 		>
 			Vendor Recommendations
 		</button>
 		<button
 			on:click={() => switchTab('jeanie')}
 			class="rounded-t-md px-4 py-2 font-semibold"
-			class:bg-white={activeTab === 'risk'}
-			class:bg-gray-200={activeTab !== 'risk'}
+			class:bg-white={activeTab === 'jeanie'}
+			class:bg-gray-200={activeTab !== 'jeanie'}
 		>
 			Data back to Jeanie
 		</button>

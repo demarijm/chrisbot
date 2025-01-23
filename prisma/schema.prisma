@@ -1,0 +1,34 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+model DistrictVendors {
+  id                      Int       @id @default(autoincrement())
+  state                   String    // e.g. "AL"
+  county                  String?   // e.g. "Tallapoosa County"
+  city                    String?   // e.g. "Anniston"
+  ncesId                  String?   // e.g. "0100030"
+  districtOrgs            String?   // e.g. "Alexander City Schools"
+  tpaName                 String?   // e.g. "NBS"
+  nlg                     Boolean?  // e.g. true for "1", false for "0"
+  midland                 Boolean?  // e.g. true for "1", false for "0"
+  
+  // For Postgres or other DBs that support arrays, store vendors/links as String[].
+  // If using MySQL, you might switch to JSON or comma-separated Strings.
+  others403bVendorsNames  String[]
+  others403bVendorsLinks  String[]
+  others457bVendorsNames  String[]
+  others457bVendorsLinks  String[]
+}

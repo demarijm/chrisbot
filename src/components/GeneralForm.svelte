@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { Client } from '@botpress/client';
 
-	// Form inputs
+	// 1) Define form inputs
 	let firstName = '';
 	let lastName = '';
 	let employerDistrict = '';
@@ -11,7 +11,7 @@
 	let personalEmail = '';
 	let mobileNumber = '';
 
-	// This holds the data actually submitted to the bot
+	// 2) Store submitted data (so it can be displayed after submission)
 	let submittedData: {
 		firstName?: string;
 		lastName?: string;
@@ -23,13 +23,35 @@
 		mobileNumber?: string;
 	} = {};
 
+	// Botpress chat URL (updated after form submission)
 	let chatUrl = '';
 
+	// 3) Botpress Configuration
+	const token = 'bp_pat_I3RztWQiZV3FvwVkaNTuXCkGxNtzNGfDHsIW';
+	const workspaceId = 'b09dce2a-736d-482a-8cbc-39b315b2058b';
+	const botId = '34ffb0c3-deb4-4b2f-9906-e80e1b5fc39c';
+	const client = new Client({ token, workspaceId, botId });
+
+	// Helper function (optional) to create a new conversation in the "chat" integration
+	async function createNewChatConversation() {
+		// Creates a new conversation specifically for the "chat" integration
+		const { conversation } = await client.createConversation({
+			integrationName: 'chat',
+			channel: 'web',
+			tags: {}
+		});
+
+		// Build a valid chat link using the conversation ID
+		const newChatUrl = `https://chat.botpress.cloud/s/${workspaceId}/${botId}?conversationId=${conversation.id}`;
+		return newChatUrl;
+	}
+
+	// 4) Handle form submission
 	async function handleSubmit(event: Event) {
 		event.preventDefault();
 
 		try {
-			// 1) Prepare payload for Botpress
+			// Gather form data for reference or future usage:
 			const payload = {
 				user: {
 					firstName,
@@ -42,31 +64,19 @@
 					mobileNumber
 				}
 			};
+			console.log('Form payload:', payload);
 
-			// 2) Your Botpress configuration
-			const token = 'bp_pat_I3RztWQiZV3FvwVkaNTuXCkGxNtzNGfDHsIW';
-			const workspaceId = 'b09dce2a-736d-482a-8cbc-39b315b2058b';
-			const botId = '34ffb0c3-deb4-4b2f-9906-e80e1b5fc39c';
-			const client = new Client({ token, workspaceId, botId });
-
-			// 3) Example call
+			// (Optional) Example: retrieve Bot info, just to confirm it's accessible
 			const { bot } = await client.getBot({ id: botId });
-			console.log('### bot', bot);
+			console.log('Bot info:', bot);
 
-			// 4) Retrieve or create conversation
-			const [latestConversation] = await client.list
-				.conversations({ sortField: 'createdAt', sortDirection: 'desc', integrationName: 'chat' })
-				.collect({ limit: 1 });
-			console.log('### latestConversation', latestConversation);
+			// Create a NEW conversation in Botpress "chat" every time:
+			chatUrl = await createNewChatConversation();
 
-			// 5) Save chat URL
-			chatUrl = `https://chat.botpress.cloud/s/${workspaceId}/${botId}?conversationId=${bot.id}`;
-
-			// 6) Save the submitted form data so we can display it
+			// Save the submitted form data into `submittedData`
 			submittedData = { ...payload.user };
 
-			// 7) Optionally reset the **input** fields if desired
-			//    If you want to keep the form as-is, remove these lines.
+			// Optionally, reset the form fields
 			firstName = '';
 			lastName = '';
 			employerDistrict = '';
@@ -211,7 +221,8 @@
 			</ul>
 
 			<div class="mt-2 border border-dashed border-red-300 p-4">
-				Note: This link may not work until everything is fully configured:
+				Note: This link may not work until everything is fully configured or you open it in an
+				environment that can access Botpress Cloud.
 			</div>
 
 			<a href={chatUrl} target="_blank" class="text-blue-600 underline hover:text-blue-800">
