@@ -2,6 +2,7 @@
 	import GeneralForm from '../components/GeneralForm.svelte';
 	import PensionForm from '../components/PensionForm.svelte';
 	import TestingRiskCalculation from '../components/TestingRiskCalculation.svelte';
+	import VendorRecommendation from '../components/VendorRecommendation.svelte';
 
 	// Track which tab is currently active
 	let activeTab: 'general' | 'risk' | 'vendor' | 'jeanie' | 'pension' = 'general';
@@ -65,7 +66,7 @@
 		{:else if activeTab === 'pension'}
 			<PensionForm />
 		{:else if activeTab === 'vendor'}
-			Coming soon
+			<VendorRecommendation />
 		{:else if activeTab === 'jeanie'}
 			Data Object handed back to Jeanie
 		{/if}

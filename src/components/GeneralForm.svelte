@@ -2,14 +2,14 @@
 	import { Client } from '@botpress/client';
 
 	// 1) Define form inputs
-	let firstName = '';
-	let lastName = '';
-	let employerDistrict = '';
-	let school = '';
-	let jobTitle = '';
-	let workEmail = '';
-	let personalEmail = '';
-	let mobileNumber = '';
+	let firstName = 'ij';
+	let lastName = 's';
+	let employerDistrict = 'w';
+	let school = 'w';
+	let jobTitle = 'w';
+	let workEmail = 'ij@ni.de';
+	let personalEmail = 'ij@ni.de';
+	let mobileNumber = '3';
 
 	// 2) Store submitted data (so it can be displayed after submission)
 	let submittedData: {
@@ -30,21 +30,6 @@
 	const token = 'bp_pat_I3RztWQiZV3FvwVkaNTuXCkGxNtzNGfDHsIW';
 	const workspaceId = 'b09dce2a-736d-482a-8cbc-39b315b2058b';
 	const botId = '34ffb0c3-deb4-4b2f-9906-e80e1b5fc39c';
-	const client = new Client({ token, workspaceId, botId });
-
-	// Helper function (optional) to create a new conversation in the "chat" integration
-	async function createNewChatConversation() {
-		// Creates a new conversation specifically for the "chat" integration
-		const { conversation } = await client.createConversation({
-			integrationName: 'chat',
-			channel: 'web',
-			tags: {}
-		});
-
-		// Build a valid chat link using the conversation ID
-		const newChatUrl = `https://chat.botpress.cloud/s/${workspaceId}/${botId}?conversationId=${conversation.id}`;
-		return newChatUrl;
-	}
 
 	// 4) Handle form submission
 	async function handleSubmit(event: Event) {
@@ -66,12 +51,8 @@
 			};
 			console.log('Form payload:', payload);
 
-			// (Optional) Example: retrieve Bot info, just to confirm it's accessible
-			const { bot } = await client.getBot({ id: botId });
-			console.log('Bot info:', bot);
-
 			// Create a NEW conversation in Botpress "chat" every time:
-			chatUrl = await createNewChatConversation();
+			chatUrl = `${process.env.APP_URL}/chat?firstName=${firstName}&lastName=${lastName}&employerDistrict=${employerDistrict}&school=${school}&jobTitle=${jobTitle}&workEmail=${workEmail}&personalEmail=${personalEmail}&mobileNumber=${mobileNumber}`;
 
 			// Save the submitted form data into `submittedData`
 			submittedData = { ...payload.user };
