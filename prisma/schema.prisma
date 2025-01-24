@@ -13,22 +13,50 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model District {
+  id        Int     @id @default(autoincrement())
+  name      String  @unique
+  state     String?
+  county    String?
+  city      String?
+  ncesId    String? // e.g. "0100090"
+  tpaName   String? // e.g. "NBS"
 
-model DistrictVendors {
-  id                      Int       @id @default(autoincrement())
-  state                   String    // e.g. "AL"
-  county                  String?   // e.g. "Tallapoosa County"
-  city                    String?   // e.g. "Anniston"
-  ncesId                  String?   // e.g. "0100030"
-  districtOrgs            String?   // e.g. "Alexander City Schools"
-  tpaName                 String?   // e.g. "NBS"
-  nlg                     Boolean?  // e.g. true for "1", false for "0"
-  midland                 Boolean?  // e.g. true for "1", false for "0"
+  // Example booleans for capturing "NLG" or "Midland" if you decide
+  // to store them as columns instead of separate vendors
+  // nlg       Boolean @default(false)
+  // midland   Boolean @default(false)
+
+  // Relationship to the vendor/carrier table
+  carriers  Carrier[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Carrier {
+  id          Int         @id @default(autoincrement())
+  name        String      // e.g. "Security Benefit", "Equitable", "NLG"
+  link        String?     // e.g. "http://www.securitybenefit.com/"
+  type        VendorType? // e.g. 403B, 457B, NLG, MIDLAND, etc.
   
-  // For Postgres or other DBs that support arrays, store vendors/links as String[].
-  // If using MySQL, you might switch to JSON or comma-separated Strings.
-  others403bVendorsNames  String[]
-  others403bVendorsLinks  String[]
-  others457bVendorsNames  String[]
-  others457bVendorsLinks  String[]
+  // Optionally store a "score" or "rating" to let you choose the top 2 recommended
+  // investmentStyleScore   Int?
+
+  // Flags if this vendor is considered "recommended" for the district.
+  recommended Boolean     @default(false)
+
+  // The foreign key to District
+  districtId  Int
+  district    District    @relation(fields: [districtId], references: [id])
+}
+
+// You can store common vendor types here (TPA, 403b, 457b, NLG, Midland, etc.)
+enum VendorType {
+  TPA
+  B403   // 403b
+  B457   // 457b
+  NLG
+  MIDLAND
+  OTHER
 }
