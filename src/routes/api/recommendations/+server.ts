@@ -1,7 +1,8 @@
-// src/routes/api/recommendations/+server.ts
+// +server.ts (or any SvelteKit endpoint)
 import { json } from '@sveltejs/kit';
 import { PrismaClient } from '@prisma/client';
 import { getRecommendations } from '$lib/vendor-logic';
+import type { RecommendationResult } from '$lib/types'; // if you want to annotate
 
 const prisma = new PrismaClient();
 
@@ -9,7 +10,6 @@ export async function GET({ url }) {
 	const districtName = url.searchParams.get('district');
 	const userRisk = url.searchParams.get('risk') ?? null;
 
-	// If no districtName, we pass null for districtCarriers
 	let districtCarriers = null;
 
 	if (districtName) {
@@ -22,11 +22,12 @@ export async function GET({ url }) {
 		}
 	}
 
-	const recommendations = getRecommendations(districtCarriers, userRisk);
+	// The function returns a typed RecommendationResult
+	const recommendationResult: RecommendationResult = getRecommendations(districtCarriers, userRisk);
 
 	return json({
 		district: districtName || 'None',
 		userRisk,
-		recommendations
+		recommendations: recommendationResult
 	});
 }

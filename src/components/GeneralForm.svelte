@@ -1,6 +1,5 @@
 <script lang="ts">
-	import { Client } from '@botpress/client';
-
+	// import { PUBLIC_APP_URL } from '$env/static/public';
 	// 1) Define form inputs
 	let firstName = 'ij';
 	let lastName = 's';
@@ -23,52 +22,24 @@
 		mobileNumber?: string;
 	} = {};
 
-	// Botpress chat URL (updated after form submission)
 	let chatUrl = '';
 
-	// 3) Botpress Configuration
-	const token = 'bp_pat_I3RztWQiZV3FvwVkaNTuXCkGxNtzNGfDHsIW';
-	const workspaceId = 'b09dce2a-736d-482a-8cbc-39b315b2058b';
-	const botId = '34ffb0c3-deb4-4b2f-9906-e80e1b5fc39c';
-
-	// 4) Handle form submission
-	async function handleSubmit(event: Event) {
+	function handleSubmit(event: Event) {
 		event.preventDefault();
+		// Create a NEW conversation in Botpress "chat" every time:
+		chatUrl = `${window.location.origin}/chat?firstName=${firstName}&lastName=${lastName}&employerDistrict=${employerDistrict}&school=${school}&jobTitle=${jobTitle}&workEmail=${workEmail}&personalEmail=${personalEmail}&mobileNumber=${mobileNumber}`;
 
-		try {
-			// Gather form data for reference or future usage:
-			const payload = {
-				user: {
-					firstName,
-					lastName,
-					employerDistrict,
-					school,
-					jobTitle,
-					workEmail,
-					personalEmail,
-					mobileNumber
-				}
-			};
-			console.log('Form payload:', payload);
+		// Save the submitted form data into `submittedData`
 
-			// Create a NEW conversation in Botpress "chat" every time:
-			chatUrl = `${process.env.APP_URL}/chat?firstName=${firstName}&lastName=${lastName}&employerDistrict=${employerDistrict}&school=${school}&jobTitle=${jobTitle}&workEmail=${workEmail}&personalEmail=${personalEmail}&mobileNumber=${mobileNumber}`;
-
-			// Save the submitted form data into `submittedData`
-			submittedData = { ...payload.user };
-
-			// Optionally, reset the form fields
-			firstName = '';
-			lastName = '';
-			employerDistrict = '';
-			school = '';
-			jobTitle = '';
-			workEmail = '';
-			personalEmail = '';
-			mobileNumber = '';
-		} catch (error) {
-			console.error('Failed to create new chat via Botpress API:', error);
-		}
+		// Optionally, reset the form fields
+		firstName = '';
+		lastName = '';
+		employerDistrict = '';
+		school = '';
+		jobTitle = '';
+		workEmail = '';
+		personalEmail = '';
+		mobileNumber = '';
 	}
 </script>
 

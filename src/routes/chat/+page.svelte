@@ -2,9 +2,10 @@
 	import { onMount } from 'svelte';
 	// import { theme } from './theme';
 
-	const firstname = 'John';
-	const lastname = 'Doe';
-	const email = 'sdw@dfw.ce';
+	let firstName = 'John';
+	let lastName = 'Doe';
+	let workEmail = 'sdw@dfw.ce';
+
 	async function init() {
 		const theme = await fetch(
 			'https://mediafiles.botpress.cloud/34ffb0c3-deb4-4b2f-9906-e80e1b5fc39c/webchat/v2/theme.json'
@@ -13,6 +14,11 @@
 		// Ensure window.botpress is defined (may need <script src="...botpress.bundle.js"> in index.html)
 		window.botpress.on('webchat:ready', () => {
 			window.botpress.open();
+			window.botpress.updateUser({
+				firstName,
+				lastName,
+				workEmail
+			});
 		});
 
 		window.botpress.init({
@@ -45,18 +51,15 @@
 					title: 'https://botpress.com',
 					link: 'https://botpress.com'
 				}
-			},
-			user: {
-				data: {
-					firstName: 'John',
-					lastName: 'Doe',
-					email: 'john.doe@example.com'
-				}
 			}
 		});
 	}
 
 	onMount(() => {
+		const params = new URLSearchParams(window.location.search);
+		firstname = params.get('firstName') || '';
+		lastname = params.get('lscripte') || '';
+		workEmail = params.get('workEmail') || '';
 		init();
 	});
 </script>
