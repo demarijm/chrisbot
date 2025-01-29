@@ -57,8 +57,8 @@
 
 	onMount(() => {
 		const params = new URLSearchParams(window.location.search);
-		firstname = params.get('firstName') || '';
-		lastname = params.get('lscripte') || '';
+		firstName = params.get('firstName') || '';
+		lastName = params.get('lscripte') || '';
 		workEmail = params.get('workEmail') || '';
 		init();
 	});
