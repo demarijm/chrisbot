@@ -9,6 +9,59 @@
 	let workEmail = 'ij@ni.de';
 	let personalEmail = 'ij@ni.de';
 	let mobileNumber = '3';
+	let selectedState = '';
+	const states = [
+		'AL',
+		'AK',
+		'AZ',
+		'AR',
+		'CA',
+		'CO',
+		'CT',
+		'DE',
+		'FL',
+		'GA',
+		'HI',
+		'ID',
+		'IL',
+		'IN',
+		'IA',
+		'KS',
+		'KY',
+		'LA',
+		'ME',
+		'MD',
+		'MA',
+		'MI',
+		'MN',
+		'MS',
+		'MO',
+		'MT',
+		'NE',
+		'NV',
+		'NH',
+		'NJ',
+		'NM',
+		'NY',
+		'NC',
+		'ND',
+		'OH',
+		'OK',
+		'OR',
+		'PA',
+		'RI',
+		'SC',
+		'SD',
+		'TN',
+		'TX',
+		'UT',
+		'VT',
+		'VA',
+		'WA',
+		'WV',
+		'WI',
+		'WY'
+	];
 
 	// 2) Store submitted data (so it can be displayed after submission)
 	let submittedData: {
@@ -27,7 +80,7 @@
 	function handleSubmit(event: Event) {
 		event.preventDefault();
 		// Create a NEW conversation in Botpress "chat" every time:
-		chatUrl = `${window.location.origin}/chat?firstName=${firstName}&lastName=${lastName}&employerDistrict=${employerDistrict}&school=${school}&jobTitle=${jobTitle}&workEmail=${workEmail}&personalEmail=${personalEmail}&mobileNumber=${mobileNumber}`;
+		chatUrl = `${window.location.origin}/chat?firstName=${firstName}&lastName=${lastName}&employerDistrict=${employerDistrict}&school=${school}&jobTitle=${jobTitle}&workEmail=${workEmail}&personalEmail=${personalEmail}&mobileNumber=${mobileNumber}&state=${selectedState}`;
 
 		// Save the submitted form data into `submittedData`
 
@@ -147,6 +200,20 @@
 			placeholder="Enter your mobile number"
 			class="block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-400 focus:outline-none focus:ring focus:ring-blue-200"
 		/>
+	</div>
+	<div>
+		<label for="selectedState" class="mb-2 block font-semibold text-gray-700">State</label>
+		<select
+			id="selectedState"
+			bind:value={selectedState}
+			required
+			class="block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-400 focus:outline-none focus:ring focus:ring-blue-200"
+		>
+			<option value="" disabled selected>Select your state</option>
+			{#each states as st}
+				<option value={st}>{st}</option>
+			{/each}
+		</select>
 	</div>
 
 	<button
