@@ -21,15 +21,28 @@
 		}
 	});
 
-	// 2) Function to fetch recommendations
+	// 2) Function to fetch recommendations via POST
 	async function fetchRecommendations() {
-		const url = `/api/recommendations?district=${encodeURIComponent(selectedDistrict)}&risk=${encodeURIComponent(userRisk)}`;
-		const res = await fetch(url);
-		if (res.ok) {
+		try {
+			const res = await fetch('/api/recommendations', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({
+					district: selectedDistrict,
+					risk: userRisk
+				})
+			});
+
+			if (!res.ok) {
+				throw new Error(`Failed to fetch recommendations. Status: ${res.status}`);
+			}
+
 			const data = await res.json();
 			recommendations = data.recommendations; // typed as RecommendationResult
-		} else {
-			console.error('Failed to fetch recommendations');
+		} catch (error) {
+			console.error(error);
 		}
 	}
 </script>
