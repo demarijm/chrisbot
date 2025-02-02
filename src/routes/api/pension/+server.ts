@@ -43,7 +43,7 @@ export async function POST({ request }) {
 
 		const gapBasedMonthly = calculateGapBasedMonthlySavings(incomeGap, yearsUntilRetirement);
 
-		const totalNeeded = calculateTotalNeeded(incomeGap);
+		const targetSavings = calculateTotalNeeded(incomeGap);
 
 		return json({
 			success: true,
@@ -53,7 +53,7 @@ export async function POST({ request }) {
 			yearsUntilRetirement,
 			estimatedPension,
 			incomeGap,
-			totalNeeded,
+			targetSavings,
 			simpleMonthlySavings: simpleMonthly,
 			gapBasedMonthlySavings: gapBasedMonthly
 		});
