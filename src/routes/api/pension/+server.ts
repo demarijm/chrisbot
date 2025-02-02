@@ -23,6 +23,31 @@ function calculateTotalNeeded(incomeGap: number, withdrawalRate = 0.04) {
 }
 
 /**
+ * Future value of monthly contributions (assuming a fixed annual growth rate).
+ *
+ * FV = P * [((1 + i)^n - 1) / i]
+ * where:
+ *   P = monthly contribution
+ *   i = monthly growth rate (annualRate / 12)
+ *   n = total number of months
+ */
+function futureValueOfMonthlyContributions(
+	monthlyContribution: number,
+	annualGrowthRate: number,
+	years: number
+) {
+	const i = annualGrowthRate / 12; // monthly rate
+	const n = years * 12; // total months
+
+	if (i === 0) {
+		// Edge case for zero growth
+		return monthlyContribution * n;
+	}
+
+	return monthlyContribution * ((Math.pow(1 + i, n) - 1) / i);
+}
+
+/**
  * Gap-based premium recommendation:
  * - The amount needed per month to fill the income gap
  *   before retirement (incomeGap / yearsUntilRetirement / 12).
@@ -44,6 +69,18 @@ export async function POST({ request }) {
 		const gapBasedMonthly = calculateGapBasedMonthlySavings(incomeGap, yearsUntilRetirement);
 
 		const targetSavings = calculateTotalNeeded(incomeGap);
+		const expectedAnnualGrowthRate = 0.05; // 5%
+		const futureValue = futureValueOfMonthlyContributions(
+			simpleMonthly,
+			expectedAnnualGrowthRate,
+			yearsUntilRetirement
+		);
+
+		// 7. Annual income from those savings under a 4% withdrawal rule
+		const annualIncomeFromSavings = futureValue * 0.04;
+
+		// 8. Total retirement income (pension + withdrawal from savings)
+		const totalRetirementIncome = estimatedPension + annualIncomeFromSavings;
 
 		return json({
 			success: true,
@@ -55,7 +92,11 @@ export async function POST({ request }) {
 			incomeGap,
 			targetSavings,
 			simpleMonthlySavings: simpleMonthly,
-			gapBasedMonthlySavings: gapBasedMonthly
+			gapBasedMonthlySavings: gapBasedMonthly,
+
+			futureValue: Number(futureValue.toFixed(0)), // e.g. ~$760,000
+			annualIncomeFromSavings: Number(annualIncomeFromSavings.toFixed(0)), // e.g. ~$30,400
+			totalRetirementIncome: Number(totalRetirementIncome.toFixed(0))
 		});
 	} catch {
 		return json(
