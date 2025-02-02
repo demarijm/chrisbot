@@ -88,11 +88,11 @@ export async function POST({ request }) {
 			yearsOfService,
 			averageSalary,
 			yearsUntilRetirement,
-			estimatedPension,
-			incomeGap,
+			estimatedPension: Number(estimatedPension.toFixed(0)),
+			incomeGap: Number(incomeGap.toFixed(0)),
 			targetSavings,
-			simpleMonthlySavings: simpleMonthly,
-			gapBasedMonthlySavings: gapBasedMonthly,
+			simpleMonthlySavings: Number(simpleMonthly.toFixed(0)),
+			gapBasedMonthlySavings: Number(gapBasedMonthly.toFixed(0)),
 
 			futureValue: Number(futureValue.toFixed(0)), // e.g. ~$760,000
 			annualIncomeFromSavings: Number(annualIncomeFromSavings.toFixed(0)), // e.g. ~$30,400
