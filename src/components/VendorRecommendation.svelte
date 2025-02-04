@@ -5,11 +5,18 @@
 	// We'll store the fetched district names here
 	let allDistricts: string[] = [];
 
+	// Form inputs
 	let selectedDistrict = '';
 	let userRisk = 'Conservative';
 
-	// The recommendations we get after calling our /api/recommendations
-	let recommendations: RecommendationResult | null = null;
+	// The result from /api/recommendations
+	// We'll store the entire JSON response, which has { district, userRisk, ...RecommendationResult }
+	let recommendations:
+		| (RecommendationResult & {
+				district?: string;
+				userRisk?: string;
+		  })
+		| null = null;
 
 	// 1) Fetch the districts from /api/districts on mount
 	onMount(async () => {
@@ -21,7 +28,7 @@
 		}
 	});
 
-	// 2) Function to fetch recommendations via POST
+	// 2) POST to /api/recommendations
 	async function fetchRecommendations() {
 		try {
 			const res = await fetch('/api/recommendations', {
@@ -39,8 +46,9 @@
 				throw new Error(`Failed to fetch recommendations. Status: ${res.status}`);
 			}
 
+			// IMPORTANT: Save the entire JSON (which includes district, userRisk, etc.)
 			const data = await res.json();
-			recommendations = data.recommendations; // typed as RecommendationResult
+			recommendations = data; // <--- get the entire object from the response
 		} catch (error) {
 			console.error(error);
 		}
@@ -101,45 +109,70 @@
 	<!-- Display Recommendations if available -->
 	{#if recommendations}
 		<div class="space-y-4">
-			<p class="text-gray-700">{recommendations.message}</p>
+			<!-- We can show the district and userRisk we got back from the server -->
+			<p class="text-gray-700">
+				<strong>Matched District:</strong>
+				{recommendations.district}
+			</p>
+			<p class="text-gray-700">
+				<strong>Risk Category:</strong>
+				{recommendations.userRisk}
+			</p>
+
+			<!-- The returned message -->
+			<p class="text-gray-700">
+				<strong>Message:</strong>
+				{recommendations.message}
+			</p>
 
 			<!-- Top 403(b) Matches -->
 			<div>
 				<h3 class="text-lg font-medium">Top 403(b) Matches</h3>
-				{#if recommendations.top403b.length}
+				{#if recommendations.top403b && recommendations.top403b.length}
 					<ul class="mt-2 list-inside list-disc space-y-1">
 						{#each recommendations.top403b as item}
 							<li>
 								{item.vendor}
-								<span class="text-sm text-gray-600">
-									(Risk categories: {item.riskScoreCategory.join(', ')})
-								</span>
+								<!-- Show optional risk categories if available -->
+								{#if item.riskScoreCategory && item.riskScoreCategory.length}
+									<span class="text-sm text-gray-600">
+										(Risk: {item.riskScoreCategory.join(', ')})
+									</span>
+								{/if}
 							</li>
 						{/each}
 					</ul>
 				{:else}
-					<p class="text-gray-600">No matches found from our recommended list.</p>
+					<p class="text-gray-600">No top 403(b) matches found.</p>
 				{/if}
 			</div>
 
 			<!-- All District 403(b) Carriers -->
 			<div>
 				<h3 class="text-lg font-medium">All District 403(b) Carriers</h3>
-				<ul class="mt-2 list-inside list-disc space-y-1">
-					{#each recommendations.all403b as carrier}
-						<li>{carrier.name}</li>
-					{/each}
-				</ul>
+				{#if recommendations.all403b && recommendations.all403b.length}
+					<ul class="mt-2 list-inside list-disc space-y-1">
+						{#each recommendations.all403b as carrier}
+							<li>{carrier.name}</li>
+						{/each}
+					</ul>
+				{:else}
+					<p class="text-gray-600">No 403(b) carriers found for this district.</p>
+				{/if}
 			</div>
 
 			<!-- Fallback IRA Options -->
 			<div>
 				<h3 class="text-lg font-medium">Fallback IRA Options</h3>
-				<ul class="mt-2 list-inside list-disc space-y-1">
-					{#each recommendations.fallbackIRA as ira}
-						<li>{ira.vendor}</li>
-					{/each}
-				</ul>
+				{#if recommendations.fallbackIRA && recommendations.fallbackIRA.length}
+					<ul class="mt-2 list-inside list-disc space-y-1">
+						{#each recommendations.fallbackIRA as ira}
+							<li>{ira.vendor}</li>
+						{/each}
+					</ul>
+				{:else}
+					<p class="text-gray-600">No fallback IRAs found.</p>
+				{/if}
 			</div>
 		</div>
 	{/if}
