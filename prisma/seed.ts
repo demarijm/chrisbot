@@ -5,14 +5,32 @@ import csvParser from 'csv-parser';
 
 const prisma = new PrismaClient();
 
+/**
+ * Returns a trimmed string, or an empty string if the input is falsy or "None".
+ */
+function cleanString(value?: string): string {
+	if (!value) return '';
+	if (value.trim().toLowerCase() === 'none') return '';
+	return value.trim();
+}
+
+/**
+ * Returns a number, defaulting to 0 if the input is empty or not a valid number.
+ */
+function cleanNumber(value?: string): number {
+	if (!value || value.trim().toLowerCase() === 'none') return 0;
+	const parsed = Number(value);
+	return isNaN(parsed) ? 0 : parsed;
+}
+
 async function main() {
 	// Path to your CSV file
-	const csvFilePath = './tpa.csv';
+	const csvFilePath = './tpa-second.csv';
 
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	const districts: Array<any> = [];
+	// In-memory store for CSV rows
+	const districts: Array<Record<string, string>> = [];
 
-	// 1) Read the CSV into an in-memory array
+	// 1) Read the CSV into an array
 	await new Promise<void>((resolve, reject) => {
 		fs.createReadStream(csvFilePath)
 			.pipe(csvParser())
@@ -32,22 +50,30 @@ async function main() {
 
 	// 2) For each row, insert or update in the DB
 	for (const row of districts) {
-		const {
-			State,
-			County,
-			City,
-			'NCES ID': ncesId,
-			'District / Orgs': districtName,
-			'TPA Name': tpaName,
-			NLG,
-			Midland,
-			'Others 403b Vendors Names': vendors403b,
-			'Others 403b Vendors Links': vendors403bLinks,
-			'Others 457b Vendors Names': vendors457b,
-			'Others 457b Vendors Links': vendors457bLinks
-		} = row;
+		const State = cleanString(row['State']);
+		const County = cleanString(row['County']);
+		const City = cleanString(row['City']);
+		const ncesId = cleanString(row['NCES ID']);
+		const districtName = cleanString(row['District / Orgs']);
+		const tpaName = cleanString(row['TPA Name']);
 
-		// 2a) Create or upsert the District
+		// Convert NLG / Midland columns to numbers
+		const NLG = cleanNumber(row['NLG']); // 0 if empty
+		const Midland = cleanNumber(row['Midland']); // 0 if empty
+
+		// Pull in "Others" columns, and clean them
+		const rawVendors403b = cleanString(row['Others 403b Vendors Names']);
+		const rawVendors403bLinks = cleanString(row['Others 403b Vendors Links']);
+		const rawVendors457b = cleanString(row['Others 457b Vendors Names']);
+		const rawVendors457bLinks = cleanString(row['Others 457b Vendors Links']);
+
+		// 2a) Skip if District Name is missing
+		if (!districtName) {
+			console.warn('Skipping row with no district name:', row);
+			continue;
+		}
+
+		// 2b) Upsert the District
 		const district = await prisma.district.upsert({
 			where: { name: districtName },
 			update: {
@@ -67,45 +93,51 @@ async function main() {
 			}
 		});
 
-		// 2b) Now parse the vendor data. For example, if "NLG" is '1' or '0', treat it as a boolean:
-		if (NLG && Number(NLG) === 1) {
-			// Create or upsert a Carrier representing NLG
-			await prisma.carrier.create({
-				data: {
-					name: 'NLG',
-					type: 'NLG', // if using VendorType enum
-					recommended: false,
-					districtId: district.id
-				}
-			});
-		}
+		// 2c) Always create the "NLG" carrier (recommended = true if NLG === 1, else false)
+		await prisma.carrier.create({
+			data: {
+				name: 'NLG',
+				type: 'NLG', // e.g., matches VendorType.NLG enum
+				recommended: NLG === 1,
+				districtId: district.id
+			}
+		});
 
-		if (Midland && Number(Midland) === 1) {
-			// Create or upsert a Carrier representing Midland
-			await prisma.carrier.create({
-				data: {
-					name: 'Midland',
-					type: 'MIDLAND',
-					recommended: false,
-					districtId: district.id
-				}
-			});
-		}
+		// 2d) Always create the "Midland" carrier (recommended = true if Midland === 1, else false)
+		await prisma.carrier.create({
+			data: {
+				name: 'Midland',
+				type: 'MIDLAND', // e.g., matches VendorType.MIDLAND enum
+				recommended: Midland === 1,
+				districtId: district.id
+			}
+		});
 
-		// 2c) Handle "Others 403b" or "Others 457b" columns
-		// If your CSV uses commas to separate multiple vendors, split them:
-		const vendor403bNames = vendors403b ? vendors403b.split(',') : [];
-		const vendor403bLinks = vendors403bLinks ? vendors403bLinks.split(',') : [];
+		// 2e) Handle "Others 403b" columns
+		// Split multiple vendor names/links by comma
+		const vendor403bNames = rawVendors403b
+			? rawVendors403b
+					.split(',')
+					.map((v) => v.trim())
+					.filter(Boolean)
+			: [];
+		const vendor403bLinks = rawVendors403bLinks
+			? rawVendors403bLinks
+					.split(',')
+					.map((v) => v.trim())
+					.filter(Boolean)
+			: [];
 
 		for (let i = 0; i < vendor403bNames.length; i++) {
-			const name = vendor403bNames[i]?.trim();
-			const link = vendor403bLinks[i]?.trim();
-			if (name && name !== 'None') {
+			const name = vendor403bNames[i];
+			const link = vendor403bLinks[i] || ''; // might not have a link for each name
+
+			if (name) {
 				await prisma.carrier.create({
 					data: {
 						name,
 						link,
-						type: 'B403', // or "OTHER" if you prefer
+						type: 'B403',
 						recommended: false,
 						districtId: district.id
 					}
@@ -113,13 +145,25 @@ async function main() {
 			}
 		}
 
-		const vendor457bNames = vendors457b ? vendors457b.split(',') : [];
-		const vendor457bLinks = vendors457bLinks ? vendors457bLinks.split(',') : [];
+		// 2f) Handle "Others 457b" columns
+		const vendor457bNames = rawVendors457b
+			? rawVendors457b
+					.split(',')
+					.map((v) => v.trim())
+					.filter(Boolean)
+			: [];
+		const vendor457bLinks = rawVendors457bLinks
+			? rawVendors457bLinks
+					.split(',')
+					.map((v) => v.trim())
+					.filter(Boolean)
+			: [];
 
 		for (let i = 0; i < vendor457bNames.length; i++) {
-			const name = vendor457bNames[i]?.trim();
-			const link = vendor457bLinks[i]?.trim();
-			if (name && name !== 'None') {
+			const name = vendor457bNames[i];
+			const link = vendor457bLinks[i] || '';
+
+			if (name) {
 				await prisma.carrier.create({
 					data: {
 						name,
@@ -136,12 +180,13 @@ async function main() {
 	console.log('Seeding complete!');
 }
 
+// Run the main seeding function, disconnect the client afterwards
 main()
 	.then(async () => {
 		await prisma.$disconnect();
 	})
-	.catch(async (e) => {
-		console.error(e);
+	.catch(async (error) => {
+		console.error(error);
 		await prisma.$disconnect();
 		process.exit(1);
 	});
