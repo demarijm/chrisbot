@@ -44,6 +44,7 @@
 		"@botpress/chat": "^0.4.7",
 		"@botpress/client": "^0.40.0",
 		"@libsql/client": "^0.14.0",
+		"@sentry/sveltekit": "^8.53.0",
 		"csv-parser": "^3.1.0",
 		"fs": "^0.0.1-security",
 		"fuse.js": "^7.0.0"
