@@ -8,6 +8,7 @@
 	let personalEmail = 'sdw@dfw.ce';
 	let employerDistrict = 'Baltimore County Public Schools';
 	let school = '';
+	let state = 'MA';
 	let mobileNumber = '3';
 
 	async function init() {
@@ -23,6 +24,7 @@
 				data: {
 					firstName: firstName,
 					lastName: lastName,
+					state: state,
 					email: workEmail,
 					personalEmail: personalEmail,
 					employerDistrict: employerDistrict,
@@ -71,6 +73,7 @@
 		personalEmail = params.get('personalEmail') || '';
 		employerDistrict = params.get('employerDistrict') || '';
 		school = params.get('school') || '';
+		state = params.get('state') || '';
 		mobileNumber = params.get('mobileNumber') || '';
 		init();
 	});
