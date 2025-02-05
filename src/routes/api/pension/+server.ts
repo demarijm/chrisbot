@@ -98,7 +98,8 @@ export async function POST({ request }) {
 			annualIncomeFromSavings: Number(annualIncomeFromSavings.toFixed(2)), // e.g. ~$30,400
 			totalRetirementIncome: Number(totalRetirementIncome.toFixed(0))
 		});
-	} catch {
+	} catch (e) {
+		console.error('Invalid request or server error', e);
 		return json(
 			{
 				success: false,
