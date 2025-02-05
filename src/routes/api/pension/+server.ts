@@ -57,6 +57,7 @@ function calculateGapBasedMonthlySavings(incomeGap: number, yearsUntilRetirement
 }
 
 export async function POST({ request }) {
+	console.log('POST /api/pension', request.body);
 	try {
 		const { state, yearsOfService, averageSalary, yearsUntilRetirement } = await request.json();
 
