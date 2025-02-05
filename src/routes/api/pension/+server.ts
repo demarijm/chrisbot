@@ -100,10 +100,11 @@ export async function POST({ request }) {
 		});
 	} catch (e) {
 		console.error('Invalid request or server error', e);
+		const errorMessage = e instanceof Error ? e.message : 'Unknown server error';
 		return json(
 			{
 				success: false,
-				error: 'Invalid request or server error'
+				error: errorMessage
 			},
 			{ status: 400 }
 		);
