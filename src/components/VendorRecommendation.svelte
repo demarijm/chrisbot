@@ -91,7 +91,7 @@
 			<option value="Conservative">Conservative</option>
 			<option value="Balanced">Balanced</option>
 			<option value="Growth">Growth</option>
-			<option value="Aggressive">Aggressive</option>
+			<option value="Aggressive Growth">Aggressive Growth</option>
 			<option value="Most Aggressive">Most Aggressive</option>
 		</select>
 	</div>
@@ -108,6 +108,9 @@
 
 	<!-- Display Recommendations if available -->
 	{#if recommendations}
+		{#if recommendations.selfEnroll === false}
+			<p class="text-red-600">This risk score does not allow self-enrollment.</p>
+		{/if}
 		<div class="space-y-4">
 			<!-- We can show the district and userRisk we got back from the server -->
 			<p class="text-gray-700">
@@ -129,14 +132,36 @@
 			<div>
 				<h3 class="text-lg font-medium">Top 403(b) Matches</h3>
 				{#if recommendations.top403b && recommendations.top403b.length}
-					<ul class="mt-2 list-inside list-disc space-y-1">
+					<ul class="mt-2 list-inside list-disc space-y-2">
 						{#each recommendations.top403b as item}
 							<li>
-								{item.vendor}
-								<!-- Show optional risk categories if available -->
+								<strong>{item.vendor}</strong>
+								<!-- Risk Categories -->
 								{#if item.riskScoreCategory && item.riskScoreCategory.length}
 									<span class="text-sm text-gray-600">
 										(Risk: {item.riskScoreCategory.join(', ')})
+									</span>
+								{/if}
+								<br />
+
+								<!-- Business Type -->
+								<span class="text-sm text-gray-600">
+									Business Type: {item.businessType}
+								</span>
+								<br />
+
+								<!-- Growth Rate -->
+								{#if item.recommendedGrowthRate}
+									<span class="text-sm text-gray-600">
+										Growth Rate: {item.recommendedGrowthRate}
+									</span>
+									<br />
+								{/if}
+
+								<!-- Product Type -->
+								{#if item.recommendedProductType}
+									<span class="text-sm text-gray-600">
+										Product Type: {item.recommendedProductType}
 									</span>
 								{/if}
 							</li>
@@ -165,9 +190,39 @@
 			<div>
 				<h3 class="text-lg font-medium">Fallback IRA Options</h3>
 				{#if recommendations.fallbackIRA && recommendations.fallbackIRA.length}
-					<ul class="mt-2 list-inside list-disc space-y-1">
+					<ul class="mt-2 list-inside list-disc space-y-2">
 						{#each recommendations.fallbackIRA as ira}
-							<li>{ira.vendor}</li>
+							<li>
+								<strong>{ira.vendor}</strong>
+								<!-- Risk Categories -->
+								{#if ira.riskScoreCategory && ira.riskScoreCategory.length}
+									<span class="text-sm text-gray-600">
+										(Risk: {ira.riskScoreCategory.join(', ')})
+									</span>
+								{/if}
+								<br />
+
+								<!-- Business Type -->
+								<span class="text-sm text-gray-600">
+									Business Type: {ira.businessType}
+								</span>
+								<br />
+
+								<!-- Growth Rate -->
+								{#if ira.recommendedGrowthRate}
+									<span class="text-sm text-gray-600">
+										Growth Rate: {ira.recommendedGrowthRate}
+									</span>
+									<br />
+								{/if}
+
+								<!-- Product Type -->
+								{#if ira.recommendedProductType}
+									<span class="text-sm text-gray-600">
+										Product Type: {ira.recommendedProductType}
+									</span>
+								{/if}
+							</li>
 						{/each}
 					</ul>
 				{:else}

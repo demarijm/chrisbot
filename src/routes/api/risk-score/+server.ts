@@ -1,4 +1,3 @@
-// src/routes/api/risk-score/+server.ts
 import type { RequestHandler } from '@sveltejs/kit';
 
 export const POST: RequestHandler = async ({ request }) => {
@@ -13,7 +12,7 @@ export const POST: RequestHandler = async ({ request }) => {
 			totalScore += numericValue;
 		}
 
-		// Determine risk category using the ranges you provided:
+		// Determine risk category using the ranges:
 		//  9–14      Short-Term
 		// 15–21      Conservative
 		// 22–28      Balanced
@@ -37,21 +36,15 @@ export const POST: RequestHandler = async ({ request }) => {
 		}
 
 		// Return the result
-		return new Response(
-			JSON.stringify({ success: true, totalScore, riskLevel }),
-			{
-				status: 200,
-				headers: { 'Content-Type': 'application/json' }
-			}
-		);
+		return new Response(JSON.stringify({ success: true, totalScore, riskLevel }), {
+			status: 200,
+			headers: { 'Content-Type': 'application/json' }
+		});
 	} catch (error) {
 		console.error('Error parsing request body:', error);
-		return new Response(
-			JSON.stringify({ success: false, message: 'Invalid request' }),
-			{
-				status: 400,
-				headers: { 'Content-Type': 'application/json' }
-			}
-		);
+		return new Response(JSON.stringify({ success: false, message: 'Invalid request' }), {
+			status: 400,
+			headers: { 'Content-Type': 'application/json' }
+		});
 	}
 };

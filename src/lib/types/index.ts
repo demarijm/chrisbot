@@ -6,7 +6,9 @@ import type { Carrier } from '@prisma/client';
 export interface BaseVendor {
 	vendor: string;
 	riskScoreCategory: string[];
-	businessType: string;
+	businessType: string; // e.g. "403(b)" or "IRA"
+	recommendedGrowthRate?: string; // e.g. "5%", "7-8%", etc.
+	recommendedProductType?: string; // e.g. "Indexed Annuities", "Mutual Funds", etc.
 	notes?: string;
 }
 
@@ -16,4 +18,5 @@ export interface RecommendationResult {
 	all403b: Carrier[]; // entire list of district-approved 403(b) carriers
 	fallbackIRA: BaseVendor[]; // your fallback IRA choices (usually 2, e.g. National Life Group & Midland)
 	message: string; // a message/description for the front-end
+	selfEnroll: boolean;
 }
