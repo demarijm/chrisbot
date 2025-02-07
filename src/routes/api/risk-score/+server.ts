@@ -22,15 +22,15 @@ export const POST: RequestHandler = async ({ request }) => {
 		let riskLevel: string;
 
 		if (totalScore <= 14) {
-			riskLevel = 'Short-Term';
+			riskLevel = 'short-term';
 		} else if (totalScore <= 21) {
-			riskLevel = 'Conservative';
+			riskLevel = 'conservative';
 		} else if (totalScore <= 28) {
-			riskLevel = 'Balanced';
+			riskLevel = 'balanced';
 		} else if (totalScore <= 35) {
-			riskLevel = 'Growth';
+			riskLevel = 'growth';
 		} else if (totalScore <= 42) {
-			riskLevel = 'Aggressive Growth';
+			riskLevel = 'aggressive growth';
 		} else {
 			riskLevel = 'Most Aggressive';
 		}
