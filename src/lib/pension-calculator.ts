@@ -97,22 +97,23 @@ export function calculatePension(state: string, yearsOfService: number, averageS
 			return yearsOfService * 0.0185 * averageSalary;
 
 		case 'KY':
-			// Kentucky (graded scale example):
-			//  0-10 yrs = 1.7%, 10-20 yrs = 2%, 20-26 yrs = 2.3%, 26-30 = 2.5%, 30+ = 3%
-			// We'll do a simplified approach:
+			// Kentucky (graded scale example)
+			// 0–10 yrs = 1.7%, 11–20 yrs = 2%, 21–26 yrs = 2.3%, 27–30 yrs = 2.5%, 31+ yrs = 3%
 			if (yearsOfService <= 10) {
+				// All years fall in the first bracket
 				return yearsOfService * 0.017 * averageSalary;
 			} else if (yearsOfService <= 20) {
-				// years 11–20
+				// First 10 years at 1.7%; remaining (yearsOfService - 10) at 2%
 				return (10 * 0.017 + (yearsOfService - 10) * 0.02) * averageSalary;
 			} else if (yearsOfService <= 26) {
-				// years 21–26
+				// First 10 years at 1.7%; next 10 years at 2%; remaining (yearsOfService - 20) at 2.3%
 				return (10 * 0.017 + 10 * 0.02 + (yearsOfService - 20) * 0.023) * averageSalary;
 			} else if (yearsOfService <= 30) {
-				// years 27–30
+				// First 10 years at 1.7%; next 10 at 2%; next 6 at 2.3%;
+				// remaining (yearsOfService - 26) at 2.5%
 				return (10 * 0.017 + 10 * 0.02 + 6 * 0.023 + (yearsOfService - 26) * 0.025) * averageSalary;
 			} else {
-				// 30+ => 3%
+				// 31+ years => everything above 30 is at 3%
 				return (
 					(10 * 0.017 + 10 * 0.02 + 6 * 0.023 + 4 * 0.025 + (yearsOfService - 30) * 0.03) *
 					averageSalary
