@@ -2,74 +2,67 @@ import { calculatePension } from '$lib/pension-calculator';
 import { json } from '@sveltejs/kit';
 
 /**
- * Calculates the final projected salary after applying
- * an annual raise for each remaining year.
+ * Estimate final salary at retirement given:
+ * - current annual salary
+ * - years until retirement
+ * - an annual raise rate (default 3.1%)
  */
-function projectFinalSalary(
+function estimateRetirementSalary(
 	currentSalary: number,
-	annualRaiseRate: number,
-	yearsUntilRetirement: number
+	yearsUntilRetirement: number,
+	annualRaise = 0.031
 ) {
-	return currentSalary * Math.pow(1 + annualRaiseRate, yearsUntilRetirement);
+	return currentSalary * Math.pow(1 + annualRaise, yearsUntilRetirement);
 }
 
 /**
- * Iteratively calculate the future value of growing monthly contributions.
- *
- * - Start with `currentSalary`, which grows 3.1% each year.
- * - Contribute 10% of that *year’s* salary, divided monthly.
- * - Grow each monthly contribution at (annualGrowthRate/12).
- */
-function futureValueOfGrowingMonthlyContributions(
-	currentSalary: number,
-	annualRaiseRate: number,
-	annualReturnRate: number,
-	yearsUntilRetirement: number
-) {
-	let balance = 0;
-	const monthlyReturnRate = annualReturnRate / 12;
-
-	// Each year, salary goes up, and we deposit monthly
-	let salary = currentSalary;
-	for (let year = 1; year <= yearsUntilRetirement; year++) {
-		const monthlyContribution = (salary * 0.1) / 12; // 10% of that year's salary
-
-		for (let m = 0; m < 12; m++) {
-			// deposit
-			balance += monthlyContribution;
-			// grow
-			balance *= 1 + monthlyReturnRate;
-		}
-
-		// Raise salary at year-end
-		salary *= 1 + annualRaiseRate;
-	}
-
-	return balance;
-}
-
-/**
- * Simple premium recommendation (as a quick reference only):
- * - 10% of *current* annual salary, split into monthly contributions.
+ * Simple premium recommendation:
+ * - 10% of annual salary, split into monthly contributions.
  */
 function calculateSimpleMonthlySavings(annualSalary: number) {
 	return (annualSalary * 0.1) / 12;
 }
 
 /**
- * Gap-based monthly savings (as another quick reference):
- * - The amount needed per month to fill the gap directly,
- *   spread over the remaining working years.
- */
-function calculateGapBasedMonthlySavings(incomeGap: number, yearsUntilRetirement: number) {
-	return incomeGap / (yearsUntilRetirement * 12);
-}
-
-/**
- * Total savings needed to cover a given annual gap via a fixed withdrawal rate.
+ * Calculates how much total savings is required to cover a given annual
+ * income gap using a specified withdrawal (or payout) rate.
  */
 function calculateTotalNeeded(incomeGap: number, withdrawalRate = 0.04) {
 	return incomeGap / withdrawalRate;
+}
+
+/**
+ * Future value of monthly contributions (assuming a fixed annual growth rate).
+ *
+ * FV = P * [((1 + i)^n - 1) / i]
+ *   where:
+ *     P = monthly contribution
+ *     i = monthly growth rate (annualRate / 12)
+ *     n = total number of months
+ */
+function futureValueOfMonthlyContributions(
+	monthlyContribution: number,
+	annualGrowthRate: number,
+	years: number
+) {
+	const i = annualGrowthRate / 12; // monthly growth rate
+	const n = years * 12; // total number of months
+
+	if (i === 0) {
+		// Edge case for zero growth
+		return monthlyContribution * n;
+	}
+
+	return monthlyContribution * ((Math.pow(1 + i, n) - 1) / i);
+}
+
+/**
+ * Gap-based premium recommendation:
+ * - The amount needed per month to fill the income gap
+ *   before retirement (incomeGap / yearsUntilRetirement / 12).
+ */
+function calculateGapBasedMonthlySavings(incomeGap: number, yearsUntilRetirement: number) {
+	return incomeGap / (yearsUntilRetirement * 12);
 }
 
 export async function POST({ request }) {
@@ -77,47 +70,41 @@ export async function POST({ request }) {
 	try {
 		const { state, yearsOfService, averageSalary, yearsUntilRetirement } = await request.json();
 
-		// 1. Project the final salary at retirement using a 3.1% raise
-		const annualSalaryGrowthRate = 0.031;
-		const finalAverageSalary = projectFinalSalary(
-			averageSalary,
-			annualSalaryGrowthRate,
-			yearsUntilRetirement
-		);
+		// 1) Project the user’s final salary at retirement,
+		//    assuming 3.1% annual raises.
+		const finalSalary = estimateRetirementSalary(averageSalary, yearsUntilRetirement, 0.031);
 
-		// 2. Add the future years of service to current yearsOfService
+		// 2) Compute the total years of service at retirement (if desired):
 		const totalYearsOfService = yearsOfService + yearsUntilRetirement;
 
-		// 3. Estimate pension based on final salary + total service
-		const estimatedPension = calculatePension(state, totalYearsOfService, finalAverageSalary);
+		// 3) Calculate pension using the final salary and updated years of service
+		const estimatedPension = calculatePension(state, totalYearsOfService, finalSalary);
 
-		// 4. Income gap at retirement
-		const incomeGap = finalAverageSalary - estimatedPension;
+		// 4) Income gap = final salary − estimated pension
+		const incomeGap = finalSalary - estimatedPension;
 
-		// 5. Simple monthly savings (10% of current salary, not grown)
+		// 5) Simple monthly savings: still 10% of *current* salary
 		const simpleMonthly = calculateSimpleMonthlySavings(averageSalary);
 
-		// 6. Gap-based monthly savings
+		// 6) Gap-based monthly: how much each month to make up that gap
 		const gapBasedMonthly = calculateGapBasedMonthlySavings(incomeGap, yearsUntilRetirement);
 
-		// 7. Target total savings required to fill gap at 4% withdrawal
-		const targetSavings = calculateTotalNeeded(incomeGap, 0.04);
+		// 7) Target nest egg for that gap (using 4% withdrawal rate)
+		const targetSavings = calculateTotalNeeded(incomeGap);
 
-		// 8. Calculate future value of *growing* contributions:
-		//    - Start from current averageSalary, grow 3.1% each year
-		//    - Invest at 5% annual growth (monthly compounding)
+		// 8) Future value of today’s 10% monthly contributions,
+		//    assuming 5% annual growth
 		const expectedAnnualGrowthRate = 0.05; // 5%
-		const futureValue = futureValueOfGrowingMonthlyContributions(
-			averageSalary,
-			annualSalaryGrowthRate,
+		const futureValue = futureValueOfMonthlyContributions(
+			simpleMonthly,
 			expectedAnnualGrowthRate,
 			yearsUntilRetirement
 		);
 
-		// 9. Annual income from those savings at 4% withdrawal
+		// 9) Annual income from those savings using a 4% withdrawal
 		const annualIncomeFromSavings = futureValue * 0.04;
 
-		// 10. Total retirement income (pension + withdrawal from savings)
+		// 10) Total retirement income = pension + withdrawals
 		const totalRetirementIncome = estimatedPension + annualIncomeFromSavings;
 
 		return json({
@@ -127,15 +114,16 @@ export async function POST({ request }) {
 			averageSalary,
 			yearsUntilRetirement,
 
-			// Data points for the user
-			finalAverageSalary: Number(finalAverageSalary.toFixed(2)),
+			// Show the final, projected salary so the user can see how raises affected it
+			finalSalary: Number(finalSalary.toFixed(2)),
 			totalYearsOfService,
+
 			estimatedPension: Number(estimatedPension.toFixed(2)),
 			incomeGap: Number(incomeGap.toFixed(2)),
 			targetSavings: Number(targetSavings.toFixed(2)),
 
-			simpleMonthlySavings: Number(simpleMonthly.toFixed(2)),
-			gapBasedMonthlySavings: Number(gapBasedMonthly.toFixed(2)),
+			simpleMonthlySavings: Number(simpleMonthly.toFixed(0)),
+			gapBasedMonthlySavings: Number(gapBasedMonthly.toFixed(0)),
 
 			futureValue: Number(futureValue.toFixed(2)),
 			annualIncomeFromSavings: Number(annualIncomeFromSavings.toFixed(2)),
