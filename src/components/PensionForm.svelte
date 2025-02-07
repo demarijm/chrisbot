@@ -21,6 +21,7 @@
 				body: JSON.stringify({
 					state: selectedState,
 					yearsOfService,
+					retirementWish,
 					averageSalary,
 					yearsUntilRetirement
 				})
@@ -181,9 +182,6 @@
 	{/if}
 
 	{#if estimatedPension !== null}
-		<div class="mt-2 border border-dashed border-red-300 p-4">
-			This calculation is currently off
-		</div>
 		<div class="mt-4 border border-green-300 bg-green-50 p-2">
 			<p class="font-semibold">Estimated Pension:</p>
 			<p>${estimatedPension.toLocaleString()}</p>
