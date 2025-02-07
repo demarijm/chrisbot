@@ -82,7 +82,7 @@ export async function POST({ request }) {
 			yearsUntilRetirement
 		);
 
-		// 7. Annual income from those savings under a 4% withdrawal rule
+		// Annual income from those savings under a 4% withdrawal rule
 		const annualIncomeFromSavings = futureValue * 0.04;
 
 		// 8. Total retirement income (pension + withdrawal from savings)
