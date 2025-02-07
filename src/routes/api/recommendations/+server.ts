@@ -363,9 +363,17 @@ export async function POST({ request }) {
 
 	const recommendationResult = getRecommendations(districtCarriers, userRisk);
 
+	const firstRecommended = recommendationResult.top403b[0] ?? recommendationResult.fallbackIRA[0];
+
+	// 2) Extract those fields (or default to "N/A" if none found)
+	const recommendedGrowthRate = firstRecommended?.recommendedGrowthRate ?? 'N/A';
+	const recommendedProductType = firstRecommended?.recommendedProductType ?? 'N/A';
+
 	return json({
 		district: matchedDistrictName,
 		userRisk,
+		recommendedGrowthRate,
+		recommendedProductType,
 		selfEnroll:
 			userRisk?.toLowerCase() === 'aggressive growth' ||
 			userRisk?.toLowerCase() === 'most aggressive'
