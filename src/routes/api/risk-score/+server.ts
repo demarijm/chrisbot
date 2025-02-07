@@ -32,7 +32,7 @@ export const POST: RequestHandler = async ({ request }) => {
 		} else if (totalScore <= 42) {
 			riskLevel = 'aggressive growth';
 		} else {
-			riskLevel = 'Most Aggressive';
+			riskLevel = 'most aggressive';
 		}
 
 		// Return the result
