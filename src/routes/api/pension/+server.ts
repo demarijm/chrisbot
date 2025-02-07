@@ -75,7 +75,7 @@ export async function POST({ request }) {
 		const futureValue = futureValueOfMonthlyContributions(
 			simpleMonthly,
 			expectedAnnualGrowthRate,
-			yearsUntilRetirement
+			yearsUntilRetirement - yearsOfService
 		);
 
 		// Annual income from those savings under a 4% withdrawal rule
