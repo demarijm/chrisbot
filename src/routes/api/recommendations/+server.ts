@@ -376,7 +376,8 @@ export async function POST({ request }) {
 		recommendedProductType,
 		selfEnroll:
 			userRisk?.toLowerCase() === 'aggressive growth' ||
-			userRisk?.toLowerCase() === 'most aggressive'
+			userRisk?.toLowerCase() === 'most aggressive' ||
+			userRisk.toLowerCase() === 'balanced'
 				? false
 				: true,
 		...recommendationResult
