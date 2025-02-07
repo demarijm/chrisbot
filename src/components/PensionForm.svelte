@@ -2,6 +2,7 @@
 	let selectedState = 'AL';
 	let yearsOfService = 0;
 	let averageSalary = 0;
+	let yearsUntilRetirement = 0;
 	let incomeGap: number | null = null;
 	let estimatedPension: number | null = null;
 	let errorMessage: string | null = null;
@@ -19,7 +20,8 @@
 				body: JSON.stringify({
 					state: selectedState,
 					yearsOfService,
-					averageSalary
+					averageSalary,
+					yearsUntilRetirement
 				})
 			});
 
@@ -119,6 +121,20 @@
 			min="0"
 			max="100"
 			bind:value={yearsOfService}
+			class="w-full rounded border border-gray-300 px-2 py-1"
+			required
+		/>
+	</div>
+
+	<!-- Years until retirement -->
+	<div class="mb-4">
+		<label for="yearsOfService" class="mb-1 block font-semibold">Years until retirement:</label>
+		<input
+			id="yearsUntilRetirement"
+			type="number"
+			min="0"
+			max="100"
+			bind:value={yearsUntilRetirement}
 			class="w-full rounded border border-gray-300 px-2 py-1"
 			required
 		/>
