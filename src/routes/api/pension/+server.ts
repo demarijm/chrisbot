@@ -71,11 +71,12 @@ export async function POST({ request }) {
 		const gapBasedMonthly = calculateGapBasedMonthlySavings(incomeGap, yearsUntilRetirement);
 
 		const targetSavings = calculateTotalNeeded(incomeGap);
+
 		const expectedAnnualGrowthRate = 0.05; // 5%
 		const futureValue = futureValueOfMonthlyContributions(
 			simpleMonthly,
 			expectedAnnualGrowthRate,
-			yearsUntilRetirement - yearsOfService
+			yearsUntilRetirement
 		);
 
 		// Annual income from those savings under a 4% withdrawal rule
@@ -83,6 +84,10 @@ export async function POST({ request }) {
 
 		// 8. Total retirement income (pension + withdrawal from savings)
 		const totalRetirementIncome = estimatedPension + annualIncomeFromSavings;
+
+		if (!state) {
+			throw new Error('State is empty again');
+		}
 
 		return json({
 			success: true,
