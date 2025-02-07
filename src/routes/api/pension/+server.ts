@@ -62,11 +62,7 @@ export async function POST({ request }) {
 		const { state, yearsOfService, averageSalary, retirementWish, yearsUntilRetirement } =
 			await request.json();
 
-		const estimatedPension = calculatePension(
-			state,
-			yearsOfService + yearsUntilRetirement,
-			averageSalary
-		);
+		const estimatedPension = calculatePension(state, yearsOfService, averageSalary);
 
 		const incomeGap = retirementWish - estimatedPension;
 
