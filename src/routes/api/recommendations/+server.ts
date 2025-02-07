@@ -15,34 +15,46 @@ export interface BaseVendor {
 }
 
 export interface RecommendationResult {
-	top403b: BaseVendor[]; // up to 2 recommended 403(b) carriers from the district & base
+	top403b: BaseVendor[]; // up to 2 recommended 403(b) carriers
 	all403b: Carrier[]; // entire list of district-approved 403(b) carriers
-	fallbackIRA: BaseVendor[]; // fallback IRA choices (e.g. NLG & Midland)
-	message: string; // a text explanation for the front-end
+	fallbackIRA: BaseVendor[]; // fallback IRA choices (e.g. NLG & Midland) if no 403(b) match
+	message: string; // textual explanation for the front-end
 }
 
 // -------------------------------------------
-// 2) Base Vendor List
+// 2) Base Vendor List (for IRA fallback, etc.)
 // -------------------------------------------
-// In practice, you’ll probably keep your official “growth rates” / “product types” in your DB.
-// But here’s a quick lookup table for demonstration:
+const BASE_VENDORS: BaseVendor[] = [
+	{
+		vendor: 'National Life Group',
+		riskScoreCategory: ['Conservative'],
+		businessType: 'IRA'
+	},
+	{
+		vendor: 'Midland National',
+		riskScoreCategory: ['Conservative'],
+		businessType: 'IRA'
+	}
+	// Add others if needed
+];
 
-// Based on your table:
-//   National Life Group,   Conservative,     5%,        Indexed Annuities
-//   Midland National,      Conservative,     5%,        Indexed Annuities
-//   Equitable,             Balanced,         7-8%,      Indexed Annuities, Growth Mutual Funds
-//   Security Benefit Group,Balanced,         7-8%,      Indexed Annuities, Growth Mutual Funds
-//   Lincoln Investment,    Growth,           9-10%,     Growth Mutual Funds, Variable Annuities
-//   PlanMember Services,   Growth,           9-10%,     Growth Mutual Funds, Variable Annuities
-//   Lincoln Investment,    Aggressive Growth 10-12%,    High-Growth Mutual Funds, Variable Annuities
-//   Equitable,             Aggressive Growth 10-12%,    High-Growth Mutual Funds, Variable Annuities
+// For demonstration: potential “similar” conservative carriers
+const OTHER_CONSERVATIVE_FALLBACKS = ['North American', 'Global Atlantic', 'Symetra'];
+const OTHER_BALANCED_FALLBACKS = ['Fidelity', 'TIAA']; // Example
+const OTHER_GROWTH_FALLBACKS = ['Voya', 'MassMutual']; // Example
+const OTHER_AGGRESSIVE_FALLBACKS = ['AIG', 'Transamerica']; // Example
 
+// Optional random filler if we need to pick a second vendor but can’t find any in district
+const RANDOM_PLACEHOLDER = ['Vendor A', 'Vendor B', 'Vendor C', 'Vendor D'];
+
+// -------------------------------------------
+// 3) Vendor Growth Rate / Product Type Lookup
+// -------------------------------------------
 interface VendorDetails {
 	growthRate: string;
-	productType: string; // or you can store an array if you prefer
+	productType: string; // or an array if you prefer
 }
 
-// Let’s store a simple dictionary keyed by “Vendor Name + Risk Category”
 const RECOMMENDATION_LOOKUP: Record<string, VendorDetails> = {
 	'National Life Group|Conservative': {
 		growthRate: '5%',
@@ -86,13 +98,12 @@ function lookupVendorExtras(
 	return RECOMMENDATION_LOOKUP[key] || null;
 }
 
-// (Optional) Some default fallback if we find no direct match in the dictionary
 function getDefaultVendorExtras(risk: string): { growthRate: string; productType: string } {
 	switch (risk.toLowerCase()) {
 		case 'conservative':
 			return { growthRate: '5%', productType: 'Indexed Annuities' };
 		case 'balanced':
-			return { growthRate: '7-8%', productType: 'Growth Mutual Funds or Indexed Annuities' };
+			return { growthRate: '7-8%', productType: 'Indexed Annuities, Growth Mutual Funds' };
 		case 'growth':
 			return { growthRate: '9-10%', productType: 'Growth Mutual Funds, Variable Annuities' };
 		case 'aggressive growth':
@@ -102,31 +113,8 @@ function getDefaultVendorExtras(risk: string): { growthRate: string; productType
 	}
 }
 
-// Extra base vendors.  For demonstration:
-const BASE_VENDORS: BaseVendor[] = [
-	{
-		vendor: 'National Life Group',
-		riskScoreCategory: ['Conservative'],
-		businessType: 'IRA'
-	},
-	{
-		vendor: 'Midland National',
-		riskScoreCategory: ['Conservative'],
-		businessType: 'IRA'
-	},
-	{
-		vendor: 'Fidelity',
-		riskScoreCategory: ['Conservative', 'Balanced', 'Growth', 'Aggressive'],
-		businessType: '403(b)'
-	}
-];
-
-// For round-robin fallback if needed
-const OTHER_CONSERVATIVE_FALLBACKS = ['North American', 'Global Atlantic', 'Symetra'];
-const FOUR_ALTERNATIVES = ['Vendor A', 'Vendor B', 'Vendor C', 'Vendor D'];
-
 // -------------------------------------------
-// 3) The getRecommendations function
+// 4) The main getRecommendations function
 // -------------------------------------------
 function getRecommendations(
 	districtCarriers: Carrier[] | null,
@@ -141,158 +129,296 @@ function getRecommendations(
 		message: ''
 	};
 
-	//------------------------------------------------
-	// 1) Special scenario-based logic for CONSERVATIVE
-	//------------------------------------------------
-	if (userRisk?.toLowerCase() === 'conservative') {
-		const hasNLG = all403b.some(
-			(c) =>
-				c.name.toLowerCase().includes('national life group') || c.name.toLowerCase().includes('nlg')
-		);
-		const hasMidland = all403b.some((c) => c.name.toLowerCase().includes('midland'));
+	// If user did not provide a risk, treat them as Conservative (arbitrary fallback).
+	const risk = userRisk?.trim().toLowerCase() || 'conservative';
 
-		const otherConservativeInDistrict = all403b.filter((c) =>
-			OTHER_CONSERVATIVE_FALLBACKS.some((name) => c.name.toLowerCase().includes(name.toLowerCase()))
+	// Helper: quickly see if the districtCarriers includes a vendor by substring
+	const hasCarrier = (nameFragment: string) =>
+		all403b.some((c) => c.name.toLowerCase().includes(nameFragment.toLowerCase()));
+
+	// Helper: returns the first in-district Carrier matching any string in an array
+	const findInDistrict = (possibleNames: string[]) =>
+		all403b.find((c) =>
+			possibleNames.some((nm) => c.name.toLowerCase().includes(nm.toLowerCase()))
 		);
 
-		// SCENARIO A: NLG & Midland
+	// Helper: picks a random “placeholder” vendor if needed
+	function pickRandomVendor(r: string): BaseVendor {
+		const randomIndex = Math.floor(Math.random() * RANDOM_PLACEHOLDER.length);
+		return makeRecommended(RANDOM_PLACEHOLDER[randomIndex], r, '403(b)');
+	}
+
+	//----------------------------------------------------------------------
+	// A) Scenario-based logic by risk category
+	//----------------------------------------------------------------------
+	if (risk === 'conservative') {
+		// Desired top picks: National Life Group, Midland National
+		const hasNLG = hasCarrier('national life group') || hasCarrier('nlg');
+		const hasMidland = hasCarrier('midland');
+
+		// SCENARIO A: District has NLG + Midland
 		if (hasNLG && hasMidland) {
 			recommendationResult.top403b = [
 				makeRecommended('National Life Group', 'Conservative'),
 				makeRecommended('Midland National', 'Conservative')
 			];
 			recommendationResult.message =
-				'We recommend both National Life Group and Midland for your conservative profile.';
+				'For a Conservative profile, we recommend National Life Group and Midland National.';
 			return recommendationResult;
 		}
 
-		// SCENARIO B: Midland only
+		// SCENARIO B: Only Midland is in district
 		if (hasMidland && !hasNLG) {
 			const picks = [makeRecommended('Midland National', 'Conservative')];
 
-			if (otherConservativeInDistrict.length > 0) {
-				const secondCarrier = otherConservativeInDistrict[0];
-				picks.push(makeRecommended(secondCarrier.name, 'Conservative'));
+			// Attempt a second “similar conservative” from district
+			const alt = findInDistrict(OTHER_CONSERVATIVE_FALLBACKS);
+			if (alt) {
+				picks.push(makeRecommended(alt.name, 'Conservative'));
 			} else {
-				const randomIndex = Math.floor(Math.random() * FOUR_ALTERNATIVES.length);
-				picks.push(makeRecommended(FOUR_ALTERNATIVES[randomIndex], 'Conservative'));
+				// fallback to random placeholder
+				picks.push(pickRandomVendor('Conservative'));
 			}
-
 			recommendationResult.top403b = picks;
 			recommendationResult.message =
-				'We recommend Midland plus one more conservative carrier for your profile.';
+				'For a Conservative profile, we recommend Midland National + one other carrier.';
 			return recommendationResult;
 		}
 
-		// SCENARIO C: NLG only
-		if (!hasMidland && hasNLG) {
+		// SCENARIO C: Only NLG is in district
+		if (hasNLG && !hasMidland) {
 			const picks = [makeRecommended('National Life Group', 'Conservative')];
 
-			if (otherConservativeInDistrict.length > 0) {
-				const secondCarrier = otherConservativeInDistrict[0];
-				picks.push(makeRecommended(secondCarrier.name, 'Conservative'));
+			const alt = findInDistrict(OTHER_CONSERVATIVE_FALLBACKS);
+			if (alt) {
+				picks.push(makeRecommended(alt.name, 'Conservative'));
 			} else {
-				const randomIndex = Math.floor(Math.random() * FOUR_ALTERNATIVES.length);
-				picks.push(makeRecommended(FOUR_ALTERNATIVES[randomIndex], 'Conservative'));
+				picks.push(pickRandomVendor('Conservative'));
 			}
-
 			recommendationResult.top403b = picks;
 			recommendationResult.message =
-				'We recommend National Life Group plus one more conservative carrier for your profile.';
+				'For a Conservative profile, we recommend National Life Group + one other carrier.';
 			return recommendationResult;
 		}
 
 		// SCENARIO D: Neither NLG nor Midland
-		const allConservative = all403b.filter((c) => {
-			const lower = c.name.toLowerCase();
-			return (
-				lower.includes('national life group') ||
-				lower.includes('midland') ||
-				OTHER_CONSERVATIVE_FALLBACKS.some((vendor) => lower.includes(vendor.toLowerCase()))
-			);
-		});
+		// => see if district has any other recognized conservative carriers
+		const allConservative = all403b.filter((c) =>
+			[...OTHER_CONSERVATIVE_FALLBACKS, 'national life group', 'nlg', 'midland'].some((nm) =>
+				c.name.toLowerCase().includes(nm.toLowerCase())
+			)
+		);
 
 		if (allConservative.length > 0) {
+			// Use first 2
 			recommendationResult.top403b = allConservative
 				.slice(0, 2)
 				.map((c) => makeRecommended(c.name, 'Conservative'));
 			recommendationResult.message =
-				'We recommend two other conservative carriers available in your district.';
+				'For a Conservative profile, we recommend two other conservative carriers from your district.';
 			return recommendationResult;
 		}
 
-		// If we get here, no recognized conservative carriers are in the district
-		// => fallback IRA with NLG & Midland from our base list
+		// SCENARIO E: No recognized conservative carriers => fallback to IRA
 		recommendationResult.fallbackIRA = BASE_VENDORS.filter((bv) =>
 			['national life group', 'midland'].some((nm) => bv.vendor.toLowerCase().includes(nm))
 		).map((bv) => makeRecommended(bv.vendor, 'Conservative', 'IRA'));
+
 		recommendationResult.message =
-			'No conservative 403(b) matches found; we suggest an IRA with NLG or Midland.';
+			'No conservative 403(b) carriers found in your district; consider an IRA with NLG or Midland.';
 		return recommendationResult;
 	}
 
-	//--------------------------------------------
-	// 2) Non-Conservative logic (simplified)
-	//--------------------------------------------
-	if (all403b.length > 0 && userRisk) {
-		// Example: filter carriers whose name includes the risk string (very naive!)
-		const matched = all403b.filter((c) => c.name.toLowerCase().includes(userRisk.toLowerCase()));
+	if (risk === 'balanced') {
+		// Desired top picks: Equitable, Security Benefit Group
+		const hasEquitable = hasCarrier('equitable');
+		const hasSBG = hasCarrier('security benefit group') || hasCarrier('security benefit');
 
-		const topVendors = matched.map((c) => makeRecommended(c.name, userRisk, '403(b)'));
-
-		// Keep up to 2
-		recommendationResult.top403b = topVendors.slice(0, 2);
-	}
-
-	// If still empty, check for NLG/Midland
-	if (recommendationResult.top403b.length === 0 && all403b.length > 0) {
-		const nlgOrMidland = all403b.filter((carrier) => {
-			const lower = carrier.name.toLowerCase();
-			return (
-				lower.includes('national life group') || lower.includes('nlg') || lower.includes('midland')
-			);
-		});
-
-		if (nlgOrMidland.length > 0) {
-			recommendationResult.top403b = nlgOrMidland
-				.slice(0, 2)
-				.map((c) => makeRecommended(c.name, userRisk ?? '', '403(b)'));
+		if (hasEquitable && hasSBG) {
+			recommendationResult.top403b = [
+				makeRecommended('Equitable', 'Balanced'),
+				makeRecommended('Security Benefit Group', 'Balanced')
+			];
+			recommendationResult.message =
+				'For a Balanced profile, we recommend Equitable and Security Benefit Group.';
+			return recommendationResult;
 		}
-	}
+		if (hasEquitable && !hasSBG) {
+			const picks = [makeRecommended('Equitable', 'Balanced')];
+			const alt = findInDistrict(OTHER_BALANCED_FALLBACKS);
+			picks.push(alt ? makeRecommended(alt.name, 'Balanced') : pickRandomVendor('Balanced'));
+			recommendationResult.top403b = picks;
+			recommendationResult.message =
+				'For a Balanced profile, we recommend Equitable + one other carrier.';
+			return recommendationResult;
+		}
+		if (!hasEquitable && hasSBG) {
+			const picks = [makeRecommended('Security Benefit Group', 'Balanced')];
+			const alt = findInDistrict(OTHER_BALANCED_FALLBACKS);
+			picks.push(alt ? makeRecommended(alt.name, 'Balanced') : pickRandomVendor('Balanced'));
+			recommendationResult.top403b = picks;
+			recommendationResult.message =
+				'For a Balanced profile, we recommend Security Benefit Group + one other carrier.';
+			return recommendationResult;
+		}
 
-	// Fallback IRA
-	if (recommendationResult.top403b.length === 0) {
-		recommendationResult.fallbackIRA = BASE_VENDORS.filter((bv) =>
-			['national life group', 'midland'].some((nm) => bv.vendor.toLowerCase().includes(nm))
-		).map((bv) => makeRecommended(bv.vendor, userRisk ?? '', 'IRA'));
-	}
+		// Fallback: see if district has any other “balanced-ish” carriers
+		const allBalanced = all403b.filter((c) =>
+			['equitable', 'security benefit', ...OTHER_BALANCED_FALLBACKS].some((nm) =>
+				c.name.toLowerCase().includes(nm.toLowerCase())
+			)
+		);
 
-	// Final message
-	if (recommendationResult.top403b.length > 0) {
+		if (allBalanced.length > 0) {
+			recommendationResult.top403b = allBalanced
+				.slice(0, 2)
+				.map((c) => makeRecommended(c.name, 'Balanced'));
+			recommendationResult.message =
+				'We selected two Balanced-oriented carriers from your district.';
+			return recommendationResult;
+		}
+
+		// No district carriers => no 403(b), fallback IRA
+		recommendationResult.fallbackIRA = []; // could push IRAs if you want
 		recommendationResult.message =
-			'We found some 403(b) carriers matching your district and risk preferences.';
-	} else if (recommendationResult.fallbackIRA.length > 0) {
-		recommendationResult.message =
-			'No 403(b) matches were found, so we suggest an IRA with National Life Group or Midland.';
-	} else {
-		recommendationResult.message = 'No matches found.';
+			'No Balanced 403(b) carriers found in your district; please consider an alternative plan.';
+		return recommendationResult;
 	}
 
+	if (risk === 'growth') {
+		// Desired top picks: Lincoln Investment Planning, PlanMember Services
+		const hasLincoln = hasCarrier('lincoln investment planning');
+		const hasPlanMember = hasCarrier('planmember services');
+
+		if (hasLincoln && hasPlanMember) {
+			recommendationResult.top403b = [
+				makeRecommended('Lincoln Investment Planning', 'Growth'),
+				makeRecommended('PlanMember Services', 'Growth')
+			];
+			recommendationResult.message =
+				'For a Growth profile, we recommend Lincoln Investment Planning and PlanMember Services.';
+			return recommendationResult;
+		}
+		if (hasLincoln && !hasPlanMember) {
+			const picks = [makeRecommended('Lincoln Investment Planning', 'Growth')];
+			const alt = findInDistrict(OTHER_GROWTH_FALLBACKS);
+			picks.push(alt ? makeRecommended(alt.name, 'Growth') : pickRandomVendor('Growth'));
+			recommendationResult.top403b = picks;
+			recommendationResult.message =
+				'For a Growth profile, we recommend Lincoln Investment Planning + one other carrier.';
+			return recommendationResult;
+		}
+		if (!hasLincoln && hasPlanMember) {
+			const picks = [makeRecommended('PlanMember Services', 'Growth')];
+			const alt = findInDistrict(OTHER_GROWTH_FALLBACKS);
+			picks.push(alt ? makeRecommended(alt.name, 'Growth') : pickRandomVendor('Growth'));
+			recommendationResult.top403b = picks;
+			recommendationResult.message =
+				'For a Growth profile, we recommend PlanMember Services + one other carrier.';
+			return recommendationResult;
+		}
+
+		// fallback
+		const allGrowth = all403b.filter((c) =>
+			['lincoln investment planning', 'planmember', ...OTHER_GROWTH_FALLBACKS].some((nm) =>
+				c.name.toLowerCase().includes(nm.toLowerCase())
+			)
+		);
+
+		if (allGrowth.length > 0) {
+			recommendationResult.top403b = allGrowth
+				.slice(0, 2)
+				.map((c) => makeRecommended(c.name, 'Growth'));
+			recommendationResult.message = 'We found two Growth-oriented carriers from your district.';
+			return recommendationResult;
+		}
+
+		recommendationResult.fallbackIRA = []; // or IRAs if you prefer
+		recommendationResult.message =
+			'No Growth 403(b) carriers found in your district; please consider an alternative plan.';
+		return recommendationResult;
+	}
+
+	if (risk === 'aggressive growth') {
+		// Desired top picks: Lincoln Investment Planning, Equitable
+		const hasLincoln = hasCarrier('lincoln investment planning');
+		const hasEquitable = hasCarrier('equitable');
+
+		if (hasLincoln && hasEquitable) {
+			recommendationResult.top403b = [
+				makeRecommended('Lincoln Investment Planning', 'Aggressive Growth'),
+				makeRecommended('Equitable', 'Aggressive Growth')
+			];
+			recommendationResult.message =
+				'For an Aggressive Growth profile, we recommend Lincoln Investment Planning and Equitable.';
+			return recommendationResult;
+		}
+		if (hasLincoln && !hasEquitable) {
+			const picks = [makeRecommended('Lincoln Investment Planning', 'Aggressive Growth')];
+			const alt = findInDistrict(OTHER_AGGRESSIVE_FALLBACKS);
+			picks.push(
+				alt ? makeRecommended(alt.name, 'Aggressive Growth') : pickRandomVendor('Aggressive Growth')
+			);
+			recommendationResult.top403b = picks;
+			recommendationResult.message =
+				'For an Aggressive Growth profile, we recommend Lincoln Investment Planning + another carrier.';
+			return recommendationResult;
+		}
+		if (!hasLincoln && hasEquitable) {
+			const picks = [makeRecommended('Equitable', 'Aggressive Growth')];
+			const alt = findInDistrict(OTHER_AGGRESSIVE_FALLBACKS);
+			picks.push(
+				alt ? makeRecommended(alt.name, 'Aggressive Growth') : pickRandomVendor('Aggressive Growth')
+			);
+			recommendationResult.top403b = picks;
+			recommendationResult.message =
+				'For an Aggressive Growth profile, we recommend Equitable + another carrier.';
+			return recommendationResult;
+		}
+
+		// fallback
+		const allAgg = all403b.filter((c) =>
+			['lincoln investment planning', 'equitable', ...OTHER_AGGRESSIVE_FALLBACKS].some((nm) =>
+				c.name.toLowerCase().includes(nm.toLowerCase())
+			)
+		);
+
+		if (allAgg.length > 0) {
+			recommendationResult.top403b = allAgg
+				.slice(0, 2)
+				.map((c) => makeRecommended(c.name, 'Aggressive Growth'));
+			recommendationResult.message =
+				'We found two Aggressive Growth-oriented carriers from your district.';
+			return recommendationResult;
+		}
+
+		recommendationResult.fallbackIRA = [];
+		recommendationResult.message =
+			'No Aggressive Growth 403(b) carriers found in your district; please consider an alternative plan.';
+		return recommendationResult;
+	}
+
+	//----------------------------------------------------------------------
+	// B) Catch-all for unrecognized risk
+	//----------------------------------------------------------------------
+	recommendationResult.message = `We do not have a predefined recommendation for the "${userRisk}" risk profile.`;
 	return recommendationResult;
 }
 
-// Helper function to create a BaseVendor with recommended details
+// -------------------------------------------
+// Helper to build recommended vendor objects
+// -------------------------------------------
 function makeRecommended(
 	vendorName: string,
 	risk: string,
 	businessTypeOverride?: string
 ): BaseVendor {
-	const vendorRisk = risk || 'Conservative'; // fallback if risk is empty
+	const vendorRisk = risk || 'Conservative';
 	const extras = lookupVendorExtras(vendorName, vendorRisk);
 	let recommendedGrowthRate = extras?.growthRate;
 	let recommendedProductType = extras?.productType;
 
-	// If we don’t have a match in RECOMMENDATION_LOOKUP, we can choose a default
+	// If not found in our dictionary, use defaults
 	if (!recommendedGrowthRate || !recommendedProductType) {
 		const defaults = getDefaultVendorExtras(vendorRisk);
 		if (!recommendedGrowthRate) recommendedGrowthRate = defaults.growthRate;
@@ -309,7 +435,7 @@ function makeRecommended(
 }
 
 // -------------------------------------------
-// 4) The server route (+server.ts) using Prisma + Fuse
+// 5) The server route (+server.ts) with Prisma + Fuse
 // -------------------------------------------
 const prisma = new PrismaClient();
 
@@ -331,6 +457,7 @@ export async function POST({ request }) {
 	let matchedDistrictName = null;
 
 	if (districtName) {
+		// Attempt fuzzy search of the District table
 		const allDistricts = await prisma.district.findMany({
 			include: { carriers: true }
 		});
@@ -343,13 +470,12 @@ export async function POST({ request }) {
 		const fuse = new Fuse(fuseData, {
 			keys: ['name', 'normalizedName'],
 			threshold: 0.2,
-			distance: 100, // (Optional) Default is 100; you can tweak
-			minMatchCharLength: 3 // (Optional) Helps weed out very short partial matches
+			distance: 100,
+			minMatchCharLength: 3
 		});
 
 		const searchResults = fuse.search(districtName);
 
-		// If the search comes up empty, just send an empty array
 		if (searchResults.length > 0) {
 			const matchedDistrict = searchResults[0].item;
 			matchedDistrictName = matchedDistrict.name;
@@ -357,27 +483,38 @@ export async function POST({ request }) {
 		}
 	}
 
-	if (!matchedDistrictName) {
-		matchedDistrictName = 'None';
-	}
+	if (!matchedDistrictName) matchedDistrictName = 'None';
 
 	const recommendationResult = getRecommendations(districtCarriers, userRisk);
 
+	// For convenience, pick the first recommended 403(b) or fallback IRA
 	const firstRecommended = recommendationResult.top403b[0] ?? recommendationResult.fallbackIRA[0];
-
-	// 2) Extract those fields (or default to "N/A" if none found)
 	const recommendedGrowthRate = firstRecommended?.recommendedGrowthRate ?? 'N/A';
 	const recommendedProductType = firstRecommended?.recommendedProductType ?? 'N/A';
+
+	let vendorRecs = 'No recommended carriers found.';
+	const recs = recommendationResult.top403b;
+
+	// If you have at least one recommended carrier:
+	if (recs.length > 0) {
+		if (recs.length === 1) {
+			// Only one carrier recommended
+			vendorRecs = recs[0].vendor;
+		} else {
+			// Two or more carriers recommended; just show the first two
+			vendorRecs = `${recs[0].vendor} and ${recs[1].vendor}`;
+		}
+	}
 
 	return json({
 		district: matchedDistrictName,
 		userRisk,
 		recommendedGrowthRate,
 		recommendedProductType,
+		vendorRecs,
+		// Example: set selfEnroll = false for certain risk categories
 		selfEnroll:
-			userRisk?.toLowerCase() === 'aggressive growth' ||
-			userRisk?.toLowerCase() === 'most aggressive' ||
-			userRisk.toLowerCase() === 'balanced'
+			userRisk?.toLowerCase() === 'aggressive growth' || userRisk?.toLowerCase() === 'balanced'
 				? false
 				: true,
 		...recommendationResult
