@@ -100,6 +100,8 @@ function lookupVendorExtras(
 
 function getDefaultVendorExtras(risk: string): { growthRate: string; productType: string } {
 	switch (risk.toLowerCase()) {
+		case 'short-term':
+			return { growthRate: '5%', productType: 'Indexed Annuities' };
 		case 'conservative':
 			return { growthRate: '5%', productType: 'Indexed Annuities' };
 		case 'balanced':
@@ -151,7 +153,7 @@ function getRecommendations(
 	//----------------------------------------------------------------------
 	// A) Scenario-based logic by risk category
 	//----------------------------------------------------------------------
-	if (risk === 'conservative') {
+	if (risk === 'conservative' || risk === 'short-term') {
 		// Desired top picks: National Life Group, Midland National
 		const hasNLG = hasCarrier('national life group') || hasCarrier('nlg');
 		const hasMidland = hasCarrier('midland');
