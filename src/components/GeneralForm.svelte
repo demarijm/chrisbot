@@ -227,18 +227,6 @@
 	{#if chatUrl}
 		<div class="mt-4 text-center">
 			<p class="mb-2 text-gray-700">Your new chat is ready:</p>
-			<div>Data you submitted:</div>
-			<ul class="ml-4 text-left">
-				<li>First Name: {submittedData.firstName}</li>
-				<li>Last Name: {submittedData.lastName}</li>
-				<li>Employer/District: {submittedData.employerDistrict}</li>
-				<li>School: {submittedData.school}</li>
-				<li>Job Title: {submittedData.jobTitle}</li>
-				<li>Work Email: {submittedData.workEmail}</li>
-				<li>Personal Email: {submittedData.personalEmail}</li>
-				<li>Mobile Number: {submittedData.mobileNumber}</li>
-			</ul>
-
 			<a href={chatUrl} target="_blank" class="text-blue-600 underline hover:text-blue-800">
 				{chatUrl}
 			</a>
