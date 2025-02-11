@@ -45,7 +45,7 @@ const OTHER_GROWTH_FALLBACKS = ['Voya', 'MassMutual']; // Example
 const OTHER_AGGRESSIVE_FALLBACKS = ['AIG', 'Transamerica']; // Example
 
 // Optional random filler if we need to pick a second vendor but can’t find any in district
-const RANDOM_PLACEHOLDER = ['Vendor A', 'Vendor B', 'Vendor C', 'Vendor D'];
+const RANDOM_PLACEHOLDER = ['Fidelity', 'TIAA'];
 
 // -------------------------------------------
 // 3) Vendor Growth Rate / Product Type Lookup
