@@ -36,12 +36,12 @@
 			style:
 				'https://mediafiles.botpress.cloud/34ffb0c3-deb4-4b2f-9906-e80e1b5fc39c/webchat/v2/style.css',
 			configuration: {
-				botDescription: 'This is a Webchat demo bot.',
-				botName: 'Webchat Demo',
+				botDescription: 'Get your personalized recommendations',
+				botName: 'Jeanie AI',
 				composerPlaceholder: 'Chat with me!',
 				email: {
-					title: 'contact@botpress.com',
-					link: 'mailto:contact@botpress.com'
+					title: 'team@self-enroll.ai',
+					link: 'mailto:team@self-enroll.ai'
 				},
 				phone: {
 					title: '555 555 555',
@@ -49,15 +49,15 @@
 				},
 				privacyPolicy: {
 					title: 'Privacy policy',
-					link: 'https://botpress.com/legal/privacy-statement'
+					link: ''
 				},
 				termsOfService: {
 					title: 'Terms of service',
-					link: 'https://botpress.com/legal/terms-of-service'
+					link: ''
 				},
 				website: {
-					title: 'https://botpress.com',
-					link: 'https://botpress.com'
+					title: '',
+					link: ''
 				}
 			}
 		});
