@@ -80,7 +80,7 @@
 	function handleSubmit(event: Event) {
 		event.preventDefault();
 		// Create a NEW conversation in Botpress "chat" every time:
-		chatUrl = `${window.location.origin}/chat?firstName=${firstName}&lastName=${lastName}&employerDistrict=${employerDistrict}&school=${school}&jobTitle=${jobTitle}&workEmail=${workEmail}&personalEmail=${personalEmail}&mobileNumber=${mobileNumber}&state=${selectedState}`;
+		chatUrl = `https://appointment.self-enroll.ai?firstName=${firstName}&lastName=${lastName}&employerDistrict=${employerDistrict}&school=${school}&jobTitle=${jobTitle}&workEmail=${workEmail}&personalEmail=${personalEmail}&mobileNumber=${mobileNumber}&state=${selectedState}`;
 
 		// Save the submitted form data into `submittedData`
 
