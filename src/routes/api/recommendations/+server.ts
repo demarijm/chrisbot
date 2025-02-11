@@ -449,7 +449,11 @@ function normalizeDistrictName(name: string) {
 }
 
 export async function POST({ request }) {
-	const { district: rawDistrict = '', risk: rawRisk = null } = await request.json();
+	const {
+		district: rawDistrict = '',
+		risk: rawRisk = null,
+		state = undefined
+	} = await request.json();
 
 	const districtNameRaw = rawDistrict.trim();
 	const districtName = districtNameRaw ? normalizeDistrictName(districtNameRaw) : null;
@@ -461,7 +465,8 @@ export async function POST({ request }) {
 	if (districtName) {
 		// Attempt fuzzy search of the District table
 		const allDistricts = await prisma.district.findMany({
-			include: { carriers: true }
+			include: { carriers: true },
+			where: state ? { state } : {}
 		});
 
 		const fuseData = allDistricts.map((d) => ({
@@ -471,9 +476,10 @@ export async function POST({ request }) {
 
 		const fuse = new Fuse(fuseData, {
 			keys: ['name', 'normalizedName'],
-			threshold: 0.2,
-			distance: 100,
-			minMatchCharLength: 3
+			threshold: 0.5
+			// Commented out to get more results
+			// distance: 100,
+			// minMatchCharLength: 3
 		});
 
 		const searchResults = fuse.search(districtName);
