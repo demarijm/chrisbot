@@ -35,7 +35,6 @@ const BASE_VENDORS: BaseVendor[] = [
 		riskScoreCategory: ['Conservative'],
 		businessType: 'IRA'
 	}
-	// Add others if needed
 ];
 
 // For demonstration: potential “similar” conservative carriers

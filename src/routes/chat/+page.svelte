@@ -1,99 +1,74 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	// import { theme } from './theme';
+	import GeneralForm from '../../components/GeneralForm.svelte';
+	import PensionForm from '../../components/PensionForm.svelte';
+	import TestingRiskCalculation from '../../components/TestingRiskCalculation.svelte';
+	import VendorRecommendation from '../../components/VendorRecommendation.svelte';
 
-	let firstName = 'John';
-	let lastName = 'Doe';
-	let workEmail = 'sdw@dfw.ce';
-	let personalEmail = 'sdw@dfw.ce';
-	let employerDistrict = 'Baltimore County Public Schools';
-	let school = '';
-	let state = 'MA';
-	let mobileNumber = '3';
+	// Track which tab is currently active
+	let activeTab: 'general' | 'risk' | 'vendor' | 'jeanie' | 'pension' = 'general';
 
-	async function init() {
-		const theme = await fetch(
-			'https://mediafiles.botpress.cloud/34ffb0c3-deb4-4b2f-9906-e80e1b5fc39c/webchat/v2/theme.json'
-		).then((response) => response.json());
-
-		// Ensure window.botpress is defined (may need <script src="...botpress.bundle.js"> in index.html)
-		window.botpress.init({
-			theme,
-			clientId: '0bcc6702-fe27-4a3d-b149-0710b414996b',
-			user: {
-				data: {
-					firstName: firstName,
-					lastName: lastName,
-					state: state,
-					email: workEmail,
-					personalEmail: personalEmail,
-					employerDistrict: employerDistrict,
-					school: school,
-					mobileNumber: mobileNumber
-				}
-			},
-			botId: '34ffb0c3-deb4-4b2f-9906-e80e1b5fc39c',
-			style:
-				'https://mediafiles.botpress.cloud/34ffb0c3-deb4-4b2f-9906-e80e1b5fc39c/webchat/v2/style.css',
-			configuration: {
-				botDescription: 'This is a Webchat demo bot.',
-				botName: 'Webchat Demo',
-				composerPlaceholder: 'Chat with me!',
-				email: {
-					title: 'contact@botpress.com',
-					link: 'mailto:contact@botpress.com'
-				},
-				phone: {
-					title: '555 555 555',
-					link: 'tel:555 555 555'
-				},
-				privacyPolicy: {
-					title: 'Privacy policy',
-					link: 'https://botpress.com/legal/privacy-statement'
-				},
-				termsOfService: {
-					title: 'Terms of service',
-					link: 'https://botpress.com/legal/terms-of-service'
-				},
-				website: {
-					title: 'https://botpress.com',
-					link: 'https://botpress.com'
-				}
-			}
-		});
-
-		window.botpress.open();
+	function switchTab(tab: 'general' | 'risk' | 'pension' | 'vendor' | 'jeanie') {
+		activeTab = tab;
 	}
-
-	onMount(() => {
-		const params = new URLSearchParams(window.location.search);
-		firstName = params.get('firstName') || '';
-		lastName = params.get('lastName') || '';
-		workEmail = params.get('workEmail') || '';
-		personalEmail = params.get('personalEmail') || '';
-		employerDistrict = params.get('employerDistrict') || '';
-		school = params.get('school') || '';
-		state = params.get('state') || '';
-		mobileNumber = params.get('mobileNumber') || '';
-		init();
-	});
 </script>
 
-<style global>
-	html,
-	body {
-		margin: 0;
-		padding: 0;
-		height: 100%;
-		width: 100%;
-		overflow: hidden; /* optional, helps if you don't want any scrollbar */
-	}
+<section class="min-w-screen min-h-screen bg-gray-100">
+	<!-- Tab Buttons -->
+	<div class="flex justify-center space-x-6 p-4">
+		<button
+			on:click={() => switchTab('general')}
+			class="rounded-t-md px-4 py-2 font-semibold"
+			class:bg-white={activeTab === 'general'}
+			class:bg-gray-200={activeTab !== 'general'}
+		>
+			Bot link generation
+		</button>
+		<button
+			on:click={() => switchTab('risk')}
+			class="rounded-t-md px-4 py-2 font-semibold"
+			class:bg-white={activeTab === 'risk'}
+			class:bg-gray-200={activeTab !== 'risk'}
+		>
+			Risk Calculation
+		</button>
+		<button
+			on:click={() => switchTab('pension')}
+			class="rounded-t-md px-4 py-2 font-semibold"
+			class:bg-white={activeTab === 'pension'}
+			class:bg-gray-200={activeTab !== 'pension'}
+		>
+			Pension Calculation
+		</button>
+		<button
+			on:click={() => switchTab('vendor')}
+			class="rounded-t-md px-4 py-2 font-semibold"
+			class:bg-white={activeTab === 'vendor'}
+			class:bg-gray-200={activeTab !== 'vendor'}
+		>
+			Vendor Recommendations
+		</button>
+		<button
+			on:click={() => switchTab('jeanie')}
+			class="rounded-t-md px-4 py-2 font-semibold"
+			class:bg-white={activeTab === 'jeanie'}
+			class:bg-gray-200={activeTab !== 'jeanie'}
+		>
+			Data back to Jeanie
+		</button>
+	</div>
 
-	.webchat {
-		position: fixed;
-		top: 0;
-		left: 0;
-		height: 100vh;
-		width: 100vw;
-	}
-</style>
+	<!-- Tab Content -->
+	<div class="mx-auto w-full max-w-3xl rounded-b-md bg-white p-6 shadow-md">
+		{#if activeTab === 'general'}
+			<GeneralForm />
+		{:else if activeTab === 'risk'}
+			<TestingRiskCalculation />
+		{:else if activeTab === 'pension'}
+			<PensionForm />
+		{:else if activeTab === 'vendor'}
+			<VendorRecommendation />
+		{:else if activeTab === 'jeanie'}
+			Data Object handed back to Jeanie
+		{/if}
+	</div>
+</section>
