@@ -239,11 +239,6 @@
 				<li>Mobile Number: {submittedData.mobileNumber}</li>
 			</ul>
 
-			<div class="mt-2 border border-dashed border-red-300 p-4">
-				Note: This link may not work until everything is fully configured or you open it in an
-				environment that can access Botpress Cloud.
-			</div>
-
 			<a href={chatUrl} target="_blank" class="text-blue-600 underline hover:text-blue-800">
 				{chatUrl}
 			</a>
