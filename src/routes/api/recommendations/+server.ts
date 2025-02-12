@@ -130,6 +130,15 @@ function getRecommendations(
 		message: ''
 	};
 
+	if (!districtCarriers || districtCarriers.length === 0) {
+		recommendationResult.fallbackIRA = BASE_VENDORS.map((bv) =>
+			makeRecommended(bv.vendor, 'Conservative', 'IRA')
+		);
+		recommendationResult.message =
+			'No district provided; recommending IRA options: National Life Group and Midland National.';
+		return recommendationResult;
+	}
+
 	// If user did not provide a risk, treat them as Conservative (arbitrary fallback).
 	const risk = userRisk?.trim().toLowerCase() || 'conservative';
 
@@ -475,7 +484,7 @@ export async function POST({ request }) {
 
 		const fuse = new Fuse(fuseData, {
 			keys: ['name', 'normalizedName'],
-			threshold: 0.5
+			threshold: 0.2
 			// Commented out to get more results
 			// distance: 100,
 			// minMatchCharLength: 3
