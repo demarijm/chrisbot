@@ -490,7 +490,7 @@ export async function POST({ request }) {
 		}
 	}
 
-	if (!matchedDistrictName) matchedDistrictName = 'None';
+	if (!matchedDistrictName) matchedDistrictName = '';
 
 	const recommendationResult = getRecommendations(districtCarriers, userRisk);
 
