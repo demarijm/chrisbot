@@ -110,6 +110,7 @@ function getDefaultVendorExtras(risk: string): { growthRate: string; productType
 		case 'growth':
 			return { growthRate: '9-10%', productType: 'Growth Mutual Funds, Variable Annuities' };
 		case 'aggressive growth':
+		case 'most aggressive':
 			return { growthRate: '10-12%', productType: 'High-Growth Mutual Funds, Variable Annuities' };
 		default:
 			return { growthRate: 'N/A', productType: 'General Investments' };
@@ -362,7 +363,7 @@ function getRecommendations(
 		return recommendationResult;
 	}
 
-	if (risk === 'aggressive growth') {
+	if (risk === 'aggressive growth' || risk === 'most aggressive') {
 		// Desired top picks: Lincoln Investment Planning, Equitable
 		const hasLincoln = hasCarrier('lincoln investment planning');
 		const hasEquitable = hasCarrier('equitable');
