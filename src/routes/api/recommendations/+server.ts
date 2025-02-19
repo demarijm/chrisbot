@@ -19,6 +19,8 @@ export interface RecommendationResult {
 	all403b: Carrier[]; // entire list of district-approved 403(b) carriers
 	fallbackIRA: BaseVendor[]; // fallback IRA choices (e.g. NLG & Midland) if no 403(b) match
 	message: string; // textual explanation for the front-end
+	isMidlandApproved: boolean; // whether Midland National is approved by the district
+	isNLGApproved: boolean; //
 }
 
 // -------------------------------------------
@@ -127,8 +129,19 @@ function getRecommendations(
 		top403b: [],
 		all403b,
 		fallbackIRA: [],
-		message: ''
+		message: '',
+		isMidlandApproved: false, // Initialize as false
+		isNLGApproved: false // Initialize as false
 	};
+
+	// Check if Midland National and National Life Group are approved by the district
+	recommendationResult.isMidlandApproved = all403b.some((c) =>
+		c.name.toLowerCase().includes('midland')
+	);
+	recommendationResult.isNLGApproved = all403b.some(
+		(c) =>
+			c.name.toLowerCase().includes('national life group') || c.name.toLowerCase().includes('nlg')
+	);
 
 	if (!districtCarriers || districtCarriers.length === 0) {
 		recommendationResult.fallbackIRA = BASE_VENDORS.map((bv) =>
@@ -528,11 +541,7 @@ export async function POST({ request }) {
 		recommendedGrowthRate,
 		recommendedProductType,
 		vendorRecs,
-		// Example: set selfEnroll = false for certain risk categories
-		selfEnroll:
-			userRisk?.toLowerCase() === 'aggressive growth' || userRisk?.toLowerCase() === 'balanced'
-				? false
-				: true,
+		selfEnroll: userRisk?.toLowerCase() === 'conservative' ? true : false,
 		...recommendationResult
 	});
 }
